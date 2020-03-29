@@ -1,6 +1,6 @@
 # OpenFireVert (Open Firewall Converter)
 
-OpenFireVert is a firewall configuration conversion tool written in Python.
+OpenFireVert is an open source firewall configuration conversion tool written in Python.
 Support for any firewall type will be added based on request, demand and resource availability.
 
 This tool generates configuration for supported elements only, that must be input through CLI or "merged" with a full or running configuration, not full configuration files. See the documentation for supported elements for each vendor.
