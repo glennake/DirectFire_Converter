@@ -5,10 +5,6 @@ Support for any firewall type will be added based on request, demand and resourc
 
 This tool generates configuration for supported elements only, that must be input through CLI or "merged" with a full or running configuration, not full configuration files. See the documentation for supported elements for each vendor.
 
-## Usage
-
-python3 openfirevert.py <source_config> <source_type> <destination_type>
-
 ## Requirements
 
  * Python 3.6+
@@ -16,6 +12,10 @@ python3 openfirevert.py <source_config> <source_type> <destination_type>
 #### Python Module Dependencies
 
  * netaddr
+
+## Usage
+
+python3 openfirevert.py <source_config> <source_type> <destination_type>
 
 ## Changelog
 
