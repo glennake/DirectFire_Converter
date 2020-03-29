@@ -13,12 +13,12 @@ python3 openfirevert.py <source_config> <source_type> <destination_type>
 
  * Python 3.6+
 
-### Python Module Dependencies
+#### Python Module Dependencies
 
  * netaddr
 
 ## Changelog
 
-### Version 0.1 (Initial Release)
+#### Version 0.1 (Initial Release)
 
  * Support for conversion from WatchGuard to FortiGate
