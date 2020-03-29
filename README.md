@@ -7,15 +7,11 @@ This tool generates configuration for supported elements only, that must be inpu
 
 ## Requirements
 
- * Python 3.6+
-
-#### Python Module Dependencies
-
- * netaddr
+https://github.com/glennake/OpenFireVert/wiki/Requirements
 
 ## Usage
 
-python3 openfirevert.py <source_config> <source_type> <destination_type>
+https://github.com/glennake/OpenFireVert/wiki/Usage
 
 ## Changelog
 
