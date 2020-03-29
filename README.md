@@ -7,7 +7,7 @@ This tool generates configuration for supported elements only, that are typicall
 
 See the documentation for supported firewall types and details on what configuration elements are converted.
 
-If you encounter any problems when using this tool, please search open issues on GitHub and create a new issue if one does not exist.
+If you encounter problems when using this tool, please search open issues on GitHub and create a new issue if one does not exist.
 
 ## Requirements
 
