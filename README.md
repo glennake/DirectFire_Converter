@@ -16,9 +16,3 @@ This tool generates configuration for supported elements only, that must be inpu
 ## Usage
 
 python3 openfirevert.py <source_config> <source_type> <destination_type>
-
-## Changelog
-
-#### Version 0.1.0 (Initial Development Release)
-
- * Support for conversion from WatchGuard to FortiGate
