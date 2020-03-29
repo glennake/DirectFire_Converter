@@ -1,5 +1,4 @@
-# OpenFireVert
-Open Firewall Converter
+# OpenFireVert (Open Firewall Converter)
 
 OpenFireVert is a firewall configuration conversion tool written in Python.
 Support for any firewall type will be added based on request, demand and resource availability.
