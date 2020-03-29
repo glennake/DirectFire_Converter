@@ -16,3 +16,7 @@ This tool generates configuration for supported elements only, that must be inpu
 ## Usage
 
 python3 openfirevert.py <source_config> <source_type> <destination_type>
+
+## Changelog
+
+https://github.com/glennake/OpenFireVert/blob/master/CHANGELOG.md
