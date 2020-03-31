@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python
 
 # Title: OpenFireVert (Open Firewall Converter)
 # Description: OpenFireVert is an open source firewall configuration conversion tool written in Python

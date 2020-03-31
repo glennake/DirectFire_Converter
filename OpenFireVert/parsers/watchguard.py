@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python
 
 # Import modules
 
@@ -237,7 +237,7 @@ def parse(logger, src_config):
 
     # Parse NAT
 
-    logger.log(2, __name__ + ": parse NAT - not yet supported")
+    logger.log(3, __name__ + ": parse NAT not yet implemented")
 
     # Return parsed data
 

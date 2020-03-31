@@ -6,4 +6,5 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Initial conversion engine with modular design
 - Support for conversion from WatchGuard to FortiGate
