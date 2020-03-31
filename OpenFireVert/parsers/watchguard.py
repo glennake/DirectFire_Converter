@@ -244,10 +244,26 @@ def parse(logger, src_config):
     for policy in src_policies:
 
         data["policies"][policy_id] = {}
+        data["policies"][policy_id]["id"] = policy_id
+        data["policies"][policy_id]["type"] = "policy"
         data["policies"][policy_id]["name"] = policy.find("name").text
         data["policies"][policy_id]["description"] = policy.find("description").text
-        data["policies"][policy_id]["service"] = policy.find("service").text
+        data["policies"][policy_id]["src_interface"] = ""
+        data["policies"][policy_id]["dst_interface"] = ""
+        data["policies"][policy_id]["protocol"] = ""
+        data["policies"][policy_id]["src_address"] = ""
+        data["policies"][policy_id]["src_address_type"] = ""
+        data["policies"][policy_id]["dst_address"] = ""
+        data["policies"][policy_id]["dst_address_type"] = ""
+        data["policies"][policy_id]["src_service"] = ""
+        data["policies"][policy_id]["src_service_type"] = ""
+        data["policies"][policy_id]["dst_service"] = ""
+        data["policies"][policy_id]["dst_service_type"] = ""
+        data["policies"][policy_id]["action"] = ""
         data["policies"][policy_id]["nat"] = policy.find("nat").text
+        data["policies"][policy_id]["enabled"] = True
+        data["policies"][policy_id]["logging"] = False
+        data["policies"][policy_id]["comment"] = ""
 
         policy_id += 1
 

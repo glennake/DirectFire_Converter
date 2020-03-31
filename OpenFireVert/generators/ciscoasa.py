@@ -54,7 +54,9 @@ def generate(logger, parsed_data):
                 "route "
                 + attributes["interface"]
                 + " "
-                + attributes["destination"].replace("/", " ")
+                + attributes["network"]
+                + " "
+                + attributes["mask"]
                 + " "
                 + attributes["gateway"]
                 + " "
@@ -168,9 +170,67 @@ def generate(logger, parsed_data):
 
     logger.log(2, __name__ + ": generate policies - not yet supported")
 
-    """
-    Generate firewall policies
-    """
+    access_lists = {}
+
+    for policy, attributes in parsed_data["policies"].items():
+
+        rule_command = ""
+
+        if attributes["action"] == "allow":
+            rule_action = "permit"
+        else:
+            rule_action = "deny"
+
+        rule_command = "extended " + rule_action
+
+        if attributes["dst_service"] == any:
+            rule_command = rule_command + " ip"
+        else:
+            if attributes["dst_service_type"] == "service":
+                rule_command = rule_command + " object " + attributes["dst_service"]
+            ### range needed here?
+            elif attributes["dst_service_type"] == "group":
+                rule_command = (
+                    rule_command + " object-group " + attributes["dst_service"]
+                )
+
+        if attributes["src_address"] == "any":
+            rule_command = rule_command + " any"
+        elif attributes["src_address_type"] == "name":
+            rule_command = rule_command + " object " + attributes["src_address"]
+        elif attributes["src_address_type"] == "group":
+            rule_command = rule_command + " object-group " + attributes["src_address"]
+
+        if attributes["dst_address"] == "any":
+            rule_command = rule_command + " any"
+        elif attributes["dst_address_type"] == "name":
+            rule_command = rule_command + " object " + attributes["dst_address"]
+        elif attributes["dst_address_type"] == "group":
+            rule_command = rule_command + " object-group " + attributes["dst_address"]
+
+        if attributes["logging"] == True:
+            rule_command = rule_command + " log"
+
+        if attributes["enabled"] == False:
+            rule_command = rule_command + " inactive"
+
+        rule_command = (
+            "access-list " + attributes["src_interface"] + "_in " + rule_command
+        )
+
+        if attributes["src_interface"] not in access_lists:
+            access_lists[attributes["src_interface"]] = []
+
+        access_lists[attributes["src_interface"]].append(rule_command)
+
+    for access_list, commands in access_lists.items():
+        for command in commands:
+            dst_config.append(command)
+
+    for access_list in access_lists.keys():
+        dst_config.append(
+            "access-group " + access_list + "_in in interface " + access_list
+        )
 
     # Generate NAT
 
