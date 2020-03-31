@@ -56,6 +56,14 @@ def parse(logger, src_config):
     data["system"]["hostname"] = src_system.find("system-name").text
     data["system"]["domain"] = src_system.find("domain-name").text
 
+    # Parse interfaces
+
+    # interfaces
+
+    # Parse zones
+
+    # zones
+
     # Parse routes
 
     logger.log(2, __name__ + ": parse routes")
@@ -71,6 +79,9 @@ def parse(logger, src_config):
         data["routes"][routes_key]["mask"] = route.find("mask").text
         data["routes"][routes_key]["gateway"] = route.find("gateway-ip").text
         data["routes"][routes_key]["distance"] = route.find("metric").text
+        data["routes"][routes_key][
+            "interface"
+        ] = ""  # need to resolve interface from gateway
 
         routes_key += 1
 

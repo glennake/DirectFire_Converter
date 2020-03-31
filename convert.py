@@ -64,7 +64,7 @@ logger.log(2, "OpenFireVert.main: output mode is " + args.output_mode)
 # Static variables
 
 supported_src_formats = ["watchguard", "ciscoasa_pre83"]
-supported_dst_formats = ["fortigate"]
+supported_dst_formats = ["fortigate", "ciscoasa"]
 
 
 def parse(src_format, src_config):
@@ -90,17 +90,15 @@ def parse(src_format, src_config):
 
 def generate(dst_format, parsed_data):
 
+    logger.log(2, "OpenFireVert.generate: loading generator module for " + dst_format)
+
     if dst_format == "fortigate":
-
-        logger.log(
-            2, "OpenFireVert.generate: loading generator module for " + dst_format
-        )
-
         from OpenFireVert.generators.fortigate import generate
 
-        logger.log(
-            2, "OpenFireVert.generate: loaded generator module for " + dst_format
-        )
+    elif dst_format == "ciscoasa":
+        from OpenFireVert.generators.ciscoasa import generate
+
+    logger.log(2, "OpenFireVert.generate: loaded generator module for " + dst_format)
 
     logger.log(
         2, "OpenFireVert.generate: starting generation of destination configuration"

@@ -353,7 +353,7 @@ def parse(logger, src_config):
 
                 data["service_objects"]["tcp_" + service_name] = {}
 
-                data["service_objects"]["tcp_" + service_name]["protocol"] = "tcp"
+                data["service_objects"]["tcp_" + service_name]["protocol"] = "6"
 
                 if match2.group(1) == "range":
 
@@ -380,7 +380,7 @@ def parse(logger, src_config):
 
                 data["service_objects"]["udp_" + service_name] = {}
 
-                data["service_objects"]["udp_" + service_name]["protocol"] = "udp"
+                data["service_objects"]["udp_" + service_name]["protocol"] = "17"
 
                 if match2.group(1) == "range":
 
