@@ -7,7 +7,7 @@ try:
 except:
     raise ImportError("Could not import module xml")
 
-# Import common and settings
+# Import common, logging and settings
 
 import OpenFireVert.common as common
 from OpenFireVert.logging import logger

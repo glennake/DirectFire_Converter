@@ -1,9 +1,22 @@
 #!/usr/bin/env python
 
-# Import common and settings
+# Import modules
+
+"""
+Import any modules needed here
+"""
+
+# Import common, logging and settings
 
 import OpenFireVert.common as common
+from OpenFireVert.logging import logger
 import OpenFireVert.settings as settings
+
+# Initialise common functions
+
+"""
+Import any common functions needed here
+"""
 
 
 def generate(logger, parsed_data):
