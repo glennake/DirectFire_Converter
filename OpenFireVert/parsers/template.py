@@ -47,6 +47,10 @@ def parse(logger, src_config):
 
     data["nat"] = {}
 
+    route_id = 1
+    policy_id = 1
+    nat_id = 1
+
     # Parse system
 
     logger.log(2, __name__ + ": parse system")
@@ -105,7 +109,7 @@ def parse(logger, src_config):
 
     # Parse NAT
 
-    logger.log(3, __name__ + ": parse NAT not yet implemented")
+    logger.log(2, __name__ + ": parse NAT")
 
     """
     Parse NAT policies

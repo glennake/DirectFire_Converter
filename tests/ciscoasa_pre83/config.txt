@@ -1,0 +1,133 @@
+hostname HOSTNAME-01
+domain-name domain.local
+names
+name 10.0.0.10 INSIDE1 description Inside Host 1
+name 10.0.0.11 INSIDE2 description Inside Host 2
+name 8.8.8.8 GOOGLE_DNS1 description Google DNS 1
+name 8.8.4.4 GOOGLE_DNS2 description Google DNS 2
+!
+interface Ethernet0/0
+ description *** Outside ***
+ speed 100
+ duplex full
+ nameif outside
+ security-level 0
+ ip address 50.50.50.50 255.255.255.248
+!
+interface Ethernet0/1
+ description *** Inside ***
+ speed 100
+ duplex full
+ nameif inside
+ security-level 100
+ ip address 10.0.0.1 255.255.255.0 
+!
+interface Ethernet0/2
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface Ethernet0/3
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface Management0/0
+ shutdown
+ nameif management
+ security-level 100
+ no ip address
+ management-only
+!
+ftp mode passive
+dns server-group DefaultDNS
+ domain-name domain.local
+object-group network ALL_INTERNAL
+ description All internal networks
+ network-object INSIDE1 255.255.255.255
+ network-object INSIDE2 255.255.255.255
+object-group service port5405 tcp-udp
+ port-object eq 5405
+object-group protocol TCPUDP
+ protocol-object udp
+ protocol-object tcp
+object-group service db_ports tcp
+ description Ports used by Oracle servers
+ port-object range 8000 8100
+ port-object range 1530 1539
+ port-object eq sqlnet
+ port-object eq 9010
+ port-object eq 1636
+ port-object eq 9012
+ port-object eq 9014
+ port-object eq 7001
+object-group protocol DM_INLINE_PROTOCOL_7
+ protocol-object ip
+ protocol-object icmp
+access-list inside_nat0_outbound extended permit ip object-group ALL_INTERNAL any 
+access-list outside_access_in extended permit object-group port5405 GOOGLE_DNS1 255.255.255.255 INSIDE1 255.255.255.255
+access-list outside_access_in remark access inbound
+access-list inside_access_in extended permit ip host 10.0.0.12 any inactive 
+access-list inside_access_in remark allow host to any
+access-list inside_access_in extended permit ip any any 
+access-list IPS-INSPECT-ACL extended permit ip any any 
+no asdm history enable
+arp timeout 14400
+global (inside) 1 interface
+nat (inside) 0 access-list inside_nat0_outbound
+access-group outside_access_in in interface outside
+access-group inside_access_in in interface inside
+route outside 0.0.0.0 0.0.0.0 1.1.1.2 1
+route inside 10.0.0.0 255.0.0.0 10.0.0.254 1
+http server enable
+http INSIDE1 255.255.255.255 inside
+no snmp-server location
+no snmp-server contact
+snmp-server enable traps snmp authentication linkup linkdown coldstart
+crypto ipsec security-association lifetime seconds 28800
+crypto ipsec security-association lifetime kilobytes 4608000
+telnet timeout 5
+ssh INSIDE1 255.255.255.255 inside
+ssh timeout 5
+console timeout 0
+threat-detection basic-threat
+threat-detection statistics
+threat-detection statistics tcp-intercept rate-interval 30 burst-rate 400 average-rate 200
+ntp server INSIDE1 source inside prefer
+ntp server INSIDE2 source inside
+!
+class-map IPS-INSPECT-CLASS
+ match access-list IPS-INSPECT-ACL
+class-map inspection_default
+ match default-inspection-traffic
+!
+!
+policy-map type inspect dns preset_dns_map
+ parameters
+  message-length maximum 512
+policy-map global_policy
+ class inspection_default
+  inspect dns preset_dns_map 
+  inspect ftp 
+  inspect h323 h225 
+  inspect h323 ras 
+  inspect rsh 
+  inspect rtsp 
+  inspect esmtp 
+  inspect sqlnet 
+  inspect skinny  
+  inspect sunrpc 
+  inspect xdmcp 
+  inspect sip  
+  inspect netbios 
+  inspect tftp 
+policy-map IPS-INSPECT-POLICY
+ class IPS-INSPECT-CLASS
+  ips inline fail-open
+!
+service-policy global_policy global
+service-policy IPS-INSPECT-POLICY interface outside
+service-policy IPS-INSPECT-POLICY interface inside
+prompt hostname context 

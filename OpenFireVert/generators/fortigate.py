@@ -31,13 +31,21 @@ def generate(logger, parsed_data):
 
     logger.log(2, __name__ + ": generate system")
 
-    dst_config.append("config system global")
-    dst_config.append("  set hostname " + parsed_data["system"]["hostname"])
-    dst_config.append("end")
+    try:
+        dst_config.append("config system global")
+        dst_config.append("  set hostname " + parsed_data["system"]["hostname"])
+        dst_config.append("end")
+    except:
+        logger.log(3, __name__ + ": hostname not found in parsed data")
+        pass
 
-    dst_config.append("config system dns")
-    dst_config.append("  set domain " + parsed_data["system"]["domain"])
-    dst_config.append("end")
+    try:
+        dst_config.append("config system dns")
+        dst_config.append("  set domain " + parsed_data["system"]["domain"])
+        dst_config.append("end")
+    except:
+        logger.log(3, __name__ + ": domain name not found in parsed data")
+        pass
 
     # Generate routes
 
@@ -127,18 +135,18 @@ def generate(logger, parsed_data):
 
         if attributes["type"] == "service":
 
-            if attributes["protocol"] == "1":
+            if attributes["protocol"] in ["1", "icmp", "Icmp", "ICMP"]:
 
                 dst_config.append("    set protocol ICMP")
                 dst_config.append("    set icmptype " + attributes["icmp-type"])
                 dst_config.append("    set icmpcode " + attributes["icmp-code"])
 
-            elif attributes["protocol"] == "6":
+            elif attributes["protocol"] in ["6", "tcp", "Tcp", "TCP"]:
 
                 dst_config.append("    set protocol TCP/UDP/SCTP")
                 dst_config.append("    set tcp-portrange " + attributes["port"])
 
-            elif attributes["protocol"] == "17":
+            elif attributes["protocol"] in ["17", "udp", "Udp", "UDP"]:
 
                 dst_config.append("    set protocol TCP/UDP/SCTP")
                 dst_config.append("    set udp-portrange " + attributes["port"])
@@ -150,7 +158,7 @@ def generate(logger, parsed_data):
 
         if attributes["type"] == "range":
 
-            if attributes["protocol"] == "6":
+            if attributes["protocol"] in ["6", "tcp", "Tcp", "TCP"]:
 
                 dst_config.append("    set protocol TCP/UDP/SCTP")
                 dst_config.append(
@@ -160,7 +168,7 @@ def generate(logger, parsed_data):
                     + attributes["port_last"]
                 )
 
-            elif attributes["protocol"] == "17":
+            elif attributes["protocol"] in ["17", "udp", "Udp", "UDP"]:
 
                 dst_config.append("    set protocol TCP/UDP/SCTP")
                 dst_config.append(
@@ -200,15 +208,14 @@ def generate(logger, parsed_data):
 
     # Generate policies
 
-    logger.log(2, __name__ + ": generate policies - not yet supported")
+    logger.log(3, __name__ + ": generate policies not yet implemented")
 
-    dst_config.append("config firewall policy")
-
-    dst_config.append("end")
+    # dst_config.append("config firewall policy")
+    # dst_config.append("end")
 
     # Generate NAT
 
-    logger.log(2, __name__ + ": generate NAT - not yet supported")
+    logger.log(2, __name__ + ": generate NAT not yet implemented")
 
     # Return generated config
 

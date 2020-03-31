@@ -2,10 +2,7 @@
 
 # Import modules
 
-try:
-    import xml.etree.ElementTree as ET
-except:
-    raise ImportError("Could not import module xml")
+import xml.etree.ElementTree as ET
 
 # Import common, logging and settings
 
@@ -45,6 +42,10 @@ def parse(logger, src_config):
     data["policies"] = {}
 
     data["nat"] = {}
+
+    route_id = 1
+    policy_id = 1
+    nat_id = 1
 
     # Parse system
 
@@ -104,6 +105,7 @@ def parse(logger, src_config):
                 data["network_objects"][mbr_name] = {}
                 data["network_objects"][mbr_name]["type"] = "host"
                 data["network_objects"][mbr_name]["host"] = mbr_host
+                data["network_objects"][mbr_name]["description"] = ""
 
                 data["network_groups"][grp_name]["members"].append(mbr_name)
 
@@ -117,6 +119,7 @@ def parse(logger, src_config):
                 data["network_objects"][mbr_name]["type"] = "network"
                 data["network_objects"][mbr_name]["network"] = mbr_network
                 data["network_objects"][mbr_name]["mask"] = mbr_mask
+                data["network_objects"][mbr_name]["description"] = ""
 
                 data["network_groups"][grp_name]["members"].append(mbr_name)
 
@@ -130,6 +133,7 @@ def parse(logger, src_config):
                 data["network_objects"][mbr_name]["type"] = "range"
                 data["network_objects"][mbr_name]["address_first"] = mbr_address_first
                 data["network_objects"][mbr_name]["address_last"] = mbr_address_last
+                data["network_objects"][mbr_name]["description"] = ""
 
                 data["network_groups"][grp_name]["members"].append(mbr_name)
 
@@ -170,6 +174,7 @@ def parse(logger, src_config):
                     data["service_objects"][mbr_name]["type"] = "service"
                     data["service_objects"][mbr_name]["protocol"] = mbr_protocol
                     data["service_objects"][mbr_name]["port"] = mbr_port
+                    data["service_objects"][mbr_name]["description"] = ""
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)
 
@@ -191,6 +196,7 @@ def parse(logger, src_config):
                     data["service_objects"][mbr_name]["protocol"] = mbr_protocol
                     data["service_objects"][mbr_name]["port_first"] = mbr_port_first
                     data["service_objects"][mbr_name]["port_last"] = mbr_port_last
+                    data["service_objects"][mbr_name]["description"] = ""
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)
 
@@ -214,6 +220,7 @@ def parse(logger, src_config):
                     data["service_objects"][mbr_name]["protocol"] = mbr_protocol
                     data["service_objects"][mbr_name]["icmp-type"] = mbr_icmp_type
                     data["service_objects"][mbr_name]["icmp-code"] = mbr_icmp_code
+                    data["service_objects"][mbr_name]["description"] = ""
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)
 
@@ -222,8 +229,6 @@ def parse(logger, src_config):
     logger.log(2, __name__ + ": parse policies")
 
     src_policies = src_config_xml.findall("./policy-list/policy")
-
-    policy_id = 1
 
     for policy in src_policies:
 

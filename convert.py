@@ -63,19 +63,21 @@ logger.log(2, "OpenFireVert.main: output mode is " + args.output_mode)
 
 # Static variables
 
-supported_src_formats = ["watchguard"]
+supported_src_formats = ["watchguard", "ciscoasa_pre83"]
 supported_dst_formats = ["fortigate"]
 
 
 def parse(src_format, src_config):
 
+    logger.log(2, "OpenFireVert.parse: loading parser module for " + src_format)
+
     if src_format == "watchguard":
-
-        logger.log(2, "OpenFireVert.parse: loading parser module for " + src_format)
-
         from OpenFireVert.parsers.watchguard import parse
 
-        logger.log(2, "OpenFireVert.parse: loaded parser module for " + src_format)
+    elif src_format == "ciscoasa_pre83":
+        from OpenFireVert.parsers.ciscoasa_pre83 import parse
+
+    logger.log(2, "OpenFireVert.parse: loaded parser module for " + src_format)
 
     logger.log(2, "OpenFireVert.parse: starting parse of source configuration")
 
@@ -146,13 +148,10 @@ def main(src_format, dst_format):
 
         logger.log(
             4,
-            "OpenFireVert.main: source firewall type not currently supported "
-            + args.src_format,
+            "OpenFireVert.main: source firewall type not supported " + args.src_format,
         )
 
-        print(
-            f"{Fore.RED}Error: source firewall type not currently supported.{Style.RESET_ALL}"
-        )
+        print(f"{Fore.RED}Error: source firewall type not supported.{Style.RESET_ALL}")
 
         exit()
 
