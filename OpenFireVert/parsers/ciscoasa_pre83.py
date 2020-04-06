@@ -218,17 +218,29 @@ def parse(logger, src_config):
     Parse system objects such as hostname, DNS
     """
 
-    # Parse routes
+    # Parse interfaces
 
-    logger.log(2, __name__ + ": parse routes")
+    """
+    Parse interfaces
+    """
+
+    # Parse zones
+
+    """
+    Parse zones
+    """
+
+    # Parse static routes
+
+    logger.log(2, __name__ + ": parse static routes")
 
     """
     Parse static routes
     """
 
-    # Parse address objects
+    # Parse IPv4 network objects
 
-    logger.log(2, __name__ + ": parse address objects")
+    logger.log(2, __name__ + ": parse IPv4 network objects")
 
     for match in re.finditer(
         r"name ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}) (\S{1,})(?: description (.{1,}))?",
@@ -255,9 +267,17 @@ def parse(logger, src_config):
             data["network_objects"][address]["network"] = attributes["host"]
             data["network_objects"][address]["mask"] = match.group(1)
 
-    # Parse address groups
+    # Parse IPv6 network objects
 
-    logger.log(2, __name__ + ": parse address groups")
+    logger.log(2, __name__ + ": parse IPv6 network objects")
+
+    """
+    Parse IPv6 network objects
+    """
+
+    # Parse network groups
+
+    logger.log(2, __name__ + ": parse network groups")
 
     for match in re.finditer(
         r"object-group network ([\S]*)[\s](?: description .*[\s])?(?: (?:network-object (?:host .*|.* [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})[\s])){1,}",
@@ -500,9 +520,9 @@ def parse(logger, src_config):
 
         ### Need to parse protocol groups here
 
-    # Parse policies
+    # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse policies")
+    logger.log(2, __name__ + ": parse firewall policies")
 
     for match in re.finditer(
         r"access-list ([\S]{1,}) (remark .*|extended (permit|deny) ([a-z0-9]{1,6}|object-group [\S]{1,}) (host [\S]{1,}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|[\S]{1,} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|object-group [\S]*(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|interface(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|any(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?) (host [\S]{1,}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|[\S]{1,} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|object-group [\S]*(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|interface(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|any(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?)(?: (log))?(?: (disable))?(?: (inactive))?)",

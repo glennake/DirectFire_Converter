@@ -24,3 +24,7 @@ https://github.com/glennake/OpenFireVert/wiki/Usage
 ## Changelog
 
 https://github.com/glennake/OpenFireVert/blob/master/CHANGELOG.md
+
+## Documentation
+
+https://github.com/glennake/OpenFireVert/wiki

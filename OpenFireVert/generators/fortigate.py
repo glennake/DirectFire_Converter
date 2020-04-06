@@ -47,9 +47,25 @@ def generate(logger, parsed_data):
         logger.log(3, __name__ + ": domain name not found in parsed data")
         pass
 
-    # Generate routes
+    # Generate interfaces
 
-    logger.log(2, __name__ + ": generate routes")
+    logger.log(2, __name__ + ": generate interfaces")
+
+    """
+    Generate interfaces
+    """
+
+    # Generate zones
+
+    logger.log(2, __name__ + ": generate zones")
+
+    """
+    Generate zones
+    """
+
+    # Generate static routes
+
+    logger.log(2, __name__ + ": generate static routes")
 
     dst_config.append("config router static")
 
@@ -65,9 +81,9 @@ def generate(logger, parsed_data):
 
     dst_config.append("end")
 
-    # Generate address objects
+    # Generate network objects
 
-    logger.log(2, __name__ + ": generate address objects")
+    logger.log(2, __name__ + ": generate network objects")
 
     dst_config.append("config firewall address")
 
@@ -99,9 +115,9 @@ def generate(logger, parsed_data):
 
     dst_config.append("end")
 
-    # Generate address groups
+    # Generate network groups
 
-    logger.log(2, __name__ + ": generate address groups")
+    logger.log(2, __name__ + ": generate network groups")
 
     dst_config.append("config firewall addrgrp")
 

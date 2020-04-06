@@ -35,26 +35,44 @@ def generate(logger, parsed_data):
     Generate system objects such as hostname, DNS
     """
 
-    # Generate routes
+    # Generate interfaces
 
-    logger.log(2, __name__ + ": generate routes")
+    logger.log(2, __name__ + ": generate interfaces")
+
+    """
+    Generate interfaces
+    """
+
+    # Generate zones
+
+    logger.log(2, __name__ + ": generate zones")
+
+    """
+    Generate zones
+    """
+
+    # Generate static routes
+
+    logger.log(2, __name__ + ": generate static routes")
 
     """
     Generate static routes
     """
 
-    # Generate address objects
+    # Generate network objects
 
-    logger.log(2, __name__ + ": generate address objects")
-
-    """
-    Generate address objects
-    """
-
-    # Generate address groups
+    logger.log(2, __name__ + ": generate network objects")
 
     """
-    Generate address groups
+    Generate network objects
+    """
+
+    # Generate network groups
+
+    logger.log(2, __name__ + ": generate network groups")
+
+    """
+    Generate network groups
     """
 
     # Generate service objects

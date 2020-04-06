@@ -43,9 +43,25 @@ def generate(logger, parsed_data):
         logger.log(3, __name__ + ": domain name not found in parsed data")
         pass
 
-    # Generate routes
+    # Generate interfaces
 
-    logger.log(2, __name__ + ": generate routes")
+    logger.log(2, __name__ + ": generate interfaces")
+
+    """
+    Generate interfaces
+    """
+
+    # Generate zones
+
+    logger.log(2, __name__ + ": generate zones")
+
+    """
+    Generate zones
+    """
+
+    # Generate static routes
+
+    logger.log(2, __name__ + ": generate static routes")
 
     for route_id, attributes in parsed_data["routes"].items():
 
@@ -63,9 +79,9 @@ def generate(logger, parsed_data):
                 + attributes["distance"]
             )
 
-    # Generate address objects
+    # Generate network objects
 
-    logger.log(2, __name__ + ": generate address objects")
+    logger.log(2, __name__ + ": generate network objects")
 
     for address, attributes in parsed_data["network_objects"].items():
 
@@ -96,7 +112,9 @@ def generate(logger, parsed_data):
             dst_config.append("object network " + address)
             dst_config.append(" fqdn " + attributes["fqdn"])
 
-    # Generate address groups
+    # Generate network groups
+
+    logger.log(2, __name__ + ": generate network groups")
 
     for group, attributes in parsed_data["network_groups"].items():
 

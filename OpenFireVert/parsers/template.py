@@ -32,9 +32,12 @@ def parse(logger, src_config):
     data = {}
 
     data["system"] = {}
+
     data["interfaces"] = {}
     data["zones"] = {}
+
     data["routes"] = {}
+    data["routes6"] = {}
 
     data["network_objects"] = {}
     data["network6_objects"] = {}
@@ -48,6 +51,7 @@ def parse(logger, src_config):
     data["nat"] = {}
 
     route_id = 1
+    route6_id = 1
     policy_id = 1
     nat_id = 1
 
@@ -59,28 +63,48 @@ def parse(logger, src_config):
     Parse system objects such as hostname, DNS
     """
 
-    # Parse routes
+    # Parse interfaces
 
-    logger.log(2, __name__ + ": parse routes")
+    """
+    Parse interfaces
+    """
+
+    # Parse zones
+
+    """
+    Parse zones
+    """
+
+    # Parse static routes
+
+    logger.log(2, __name__ + ": parse static routes")
 
     """
     Parse static routes
     """
 
-    # Parse address objects
+    # Parse IPv4 network objects
 
-    logger.log(2, __name__ + ": parse address objects")
-
-    """
-    Parse address objects
-    """
-
-    # Parse address groups
-
-    logger.log(2, __name__ + ": parse address groups")
+    logger.log(2, __name__ + ": parse IPv4 network objects")
 
     """
-    Parse address groups
+    Parse IPv4 network objects
+    """
+
+    # Parse IPv6 network objects
+
+    logger.log(2, __name__ + ": parse IPv6 network objects")
+
+    """
+    Parse IPv6 network objects
+    """
+
+    # Parse network groups
+
+    logger.log(2, __name__ + ": parse network groups")
+
+    """
+    Parse network groups
     """
 
     # Parse service objects
@@ -99,9 +123,9 @@ def parse(logger, src_config):
     Parse service groups
     """
 
-    # Parse policies
+    # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse policies")
+    logger.log(2, __name__ + ": parse firewall policies")
 
     """
     Parse firewall policies

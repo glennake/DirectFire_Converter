@@ -28,9 +28,12 @@ def parse(logger, src_config):
     data = {}
 
     data["system"] = {}
+
     data["interfaces"] = {}
     data["zones"] = {}
+
     data["routes"] = {}
+    data["routes6"] = {}
 
     data["network_objects"] = {}
     data["network6_objects"] = {}
@@ -44,6 +47,7 @@ def parse(logger, src_config):
     data["nat"] = {}
 
     route_id = 1
+    route6_id = 1
     policy_id = 1
     nat_id = 1
 
@@ -58,15 +62,19 @@ def parse(logger, src_config):
 
     # Parse interfaces
 
-    # interfaces
+    """
+    Parse interfaces
+    """
 
     # Parse zones
 
-    # zones
+    """
+    Parse zones
+    """
 
-    # Parse routes
+    # Parse static routes
 
-    logger.log(2, __name__ + ": parse routes")
+    logger.log(2, __name__ + ": parse static routes")
 
     src_routes = src_config_xml.findall("./system-parameters/route/route-entry")
 
@@ -85,9 +93,9 @@ def parse(logger, src_config):
 
         routes_key += 1
 
-    # Parse address groups
+    # Parse network groups
 
-    logger.log(2, __name__ + ": parse address groups")
+    logger.log(2, __name__ + ": parse network groups")
 
     src_addr_grp = src_config_xml.findall("./address-group-list/address-group")
 
