@@ -26,6 +26,23 @@ All notable changes to this project will be documented in this file.
 
 ## [0.0.4] - 2020-04-06
 
+### Changed
+
+- Standardised comments and logging to use common terminology
+
+## [0.0.5] - 2020-04-06
+
 ### Added
 
-- Standardise comments and logging to use common terminology
+- Requirements file to install Python modules using Pip
+
+### Changed
+
+- Argument parser and logging to use named arguments
+- Documentation to provide new installation and usage details
+
+## [0.0.6] - 2020-04-06
+
+### Added
+
+- Support for parsing FortiGate
