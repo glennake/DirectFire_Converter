@@ -100,12 +100,20 @@ def parse(logger, src_config):
     Parse IPv6 network objects
     """
 
-    # Parse network groups
+    # Parse IPv4 network groups
 
-    logger.log(2, __name__ + ": parse network groups")
+    logger.log(2, __name__ + ": parse IPv4 network groups")
 
     """
-    Parse network groups
+    Parse IPv4 network groups
+    """
+
+    # Parse IPv6 network groups
+
+    logger.log(2, __name__ + ": parse IPv6 network groups")
+
+    """
+    Parse IPv6 network groups
     """
 
     # Parse service objects
