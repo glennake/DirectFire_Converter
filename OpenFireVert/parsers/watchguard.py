@@ -243,9 +243,9 @@ def parse(logger, src_config):
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)
 
-    # Parse policies
+    # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse policies")
+    logger.log(2, __name__ + ": parse firewall policies")
 
     src_policies = src_config_xml.findall("./policy-list/policy")
 
