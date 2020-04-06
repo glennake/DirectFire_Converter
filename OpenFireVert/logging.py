@@ -23,7 +23,13 @@ class logger:
         now = str(datetime.now().strftime("%Y%m%d_%H%M%S"))
 
         logging.basicConfig(
-            filename="logs/" + now + "_" + src_format + "_" + dst_format + ".log",
+            filename="logs/"
+            + now
+            + "_"
+            + str(src_format)
+            + "_"
+            + str(dst_format)
+            + ".log",
             format="%(asctime)s %(levelname)-8s %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
             level=logging.DEBUG,

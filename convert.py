@@ -46,25 +46,63 @@ import OpenFireVert.settings as settings
 # Get arguments
 
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument("input_file", help="/full/path/to/config")
-arg_parser.add_argument("output_mode", help="output mode - [config|data]")
-arg_parser.add_argument("src_format", help="source format - [watchguard]")
-arg_parser.add_argument("dst_format", help="destination format - [fortigate]")
+
+arg_parser.add_argument("-c", "--config", help="/full/path/to/config", required=True)
+
+arg_parser.add_argument(
+    "-o", "--output", choices=["config", "data"], help="output mode", required=True,
+)
+
+arg_parser.add_argument(
+    "-s",
+    "--source",
+    choices=["ciscoasa_pre83", "fortigate", "watchguard"],
+    help="source format",
+    required=True,
+)
+
+arg_parser.add_argument(
+    "-d", "--destination", choices=["ciscoasa", "fortigate"], help="destination format",
+)
+
 args = arg_parser.parse_args()
 
 # Initiate logging
 
-logger = logger(args.src_format, args.dst_format)
+if args.output == "data":
+    logger = logger(args.source, "data")
+else:
+    logger = logger(args.source, args.destination)
 
 logger.log(2, "OpenFireVert.main: converter starting")
-logger.log(2, "OpenFireVert.main: source format is " + args.src_format)
-logger.log(2, "OpenFireVert.main: destination format is " + args.dst_format)
-logger.log(2, "OpenFireVert.main: output mode is " + args.output_mode)
+logger.log(2, "OpenFireVert.main: output mode is " + args.output)
+logger.log(2, "OpenFireVert.main: source format is " + args.source)
 
-# Static variables
+# Check arguments
 
-supported_src_formats = ["ciscoasa_pre83", "fortigate", "watchguard"]
-supported_dst_formats = ["ciscoasa", "fortigate"]
+if args.output == "config":
+
+    if args.destination is None:
+
+        logger.log(
+            3,
+            "OpenFireVert.main: destination format is required when output mode is config",
+        )
+
+        print(
+            f"{Fore.RED}Error: destination format is required when output mode is config.{Style.RESET_ALL}"
+        )
+
+        exit()
+
+elif args.output == "data":
+
+    if args.destination:
+
+        logger.log(
+            2,
+            "OpenFireVert.main: destination format provided but not required when output mode is data",
+        )
 
 
 def parse(src_format, src_config):
@@ -120,39 +158,24 @@ def main(src_format, dst_format):
 
     # Load source configuration file
 
-    logger.log(
-        2, "OpenFireVert.main: loading source configuration file " + args.input_file
-    )
+    logger.log(2, "OpenFireVert.main: loading source configuration from " + args.config)
 
-    if src_format in supported_src_formats:
+    try:
 
-        try:
+        with open(args.config) as config_file:
+            src_config = config_file.read()
 
-            with open(args.input_file) as input_file:
-                src_config = input_file.read()
-
-        except:
-
-            logger.log(
-                4,
-                "OpenFireVert.main: source file either not found or not readable "
-                + args.input_file,
-            )
-
-            print(
-                f"{Fore.RED}Error: source file either not found or not readable.{Style.RESET_ALL}"
-            )
-
-            exit()
-
-    else:
+    except:
 
         logger.log(
             4,
-            "OpenFireVert.main: source firewall type not supported " + args.src_format,
+            "OpenFireVert.main: source file either not found or not readable "
+            + args.config,
         )
 
-        print(f"{Fore.RED}Error: source firewall type not supported.{Style.RESET_ALL}")
+        print(
+            f"{Fore.RED}Error: source file either not found or not readable.{Style.RESET_ALL}"
+        )
 
         exit()
 
@@ -166,7 +189,7 @@ def main(src_format, dst_format):
 
     # Output
 
-    if args.output_mode == "data":  # pretty print parsed data
+    if args.output == "data":  # pretty print parsed data
 
         logger.log(2, "OpenFireVert.main: output parsed data as dictionary dump")
 
@@ -175,34 +198,18 @@ def main(src_format, dst_format):
 
     else:  # generate destination configuration
 
-        if dst_format in supported_dst_formats:
+        logger.log(2, "OpenFireVert.main: running configuration generator")
 
-            logger.log(2, "OpenFireVert.main: running configuration generator")
+        dst_config = generate(dst_format=dst_format, parsed_data=parsed_data)
 
-            dst_config = generate(dst_format=dst_format, parsed_data=parsed_data)
+        for line in dst_config:
+            print(line)
 
-            for line in dst_config:
-                print(line)
-
-            logger.log(2, "OpenFireVert.main: configuration generator finished")
-
-        else:
-
-            logger.log(
-                4,
-                "OpenFireVert.main: destination firewall type not currently supported "
-                + args.src_format,
-            )
-
-            print(
-                f"{Fore.RED}Error: destination firewall type not currently supported.{Style.RESET_ALL}"
-            )
-
-            exit()
+        logger.log(2, "OpenFireVert.main: configuration generator finished")
 
     logger.log(2, "OpenFireVert.main: converter exiting")
 
 
 if __name__ == "__main__":
 
-    main(src_format=args.src_format, dst_format=args.dst_format)
+    main(src_format=args.source, dst_format=args.destination)
