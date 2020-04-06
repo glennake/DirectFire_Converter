@@ -42,6 +42,7 @@ def parse(logger, src_config):
     data["network_objects"] = {}
     data["network6_objects"] = {}
     data["network_groups"] = {}
+    data["network6_groups"] = {}
 
     data["service_objects"] = {}
     data["service_groups"] = {}
