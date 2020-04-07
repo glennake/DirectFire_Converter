@@ -63,11 +63,15 @@ def parse(logger, src_config):
 
     # Parse interfaces
 
+    logger.log(2, __name__ + ": parse interfaces - not yet supported")
+
     """
     Parse interfaces
     """
 
     # Parse zones
+
+    logger.log(2, __name__ + ": parse zones - not yet supported")
 
     """
     Parse zones
@@ -278,7 +282,7 @@ def parse(logger, src_config):
 
     # Parse NAT
 
-    logger.log(3, __name__ + ": parse NAT not yet implemented")
+    logger.log(3, __name__ + ": parse NAT - not yet supported")
 
     # Return parsed data
 

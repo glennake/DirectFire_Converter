@@ -46,3 +46,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Support for parsing FortiGate
+
+## [0.0.7] - 2020-04-07
+
+### Added
+
+- Support for parsing Juniper SRX (JunOS)
+- Missing logging for interfaces and zone parsing
+- Improved logging for unsupported features when parsing
+
+### Changed
+
+- Bug fixes in FortiGate parser

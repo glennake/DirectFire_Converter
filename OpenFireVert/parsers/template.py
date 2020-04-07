@@ -66,11 +66,15 @@ def parse(logger, src_config):
 
     # Parse interfaces
 
+    logger.log(2, __name__ + ": parse interfaces")
+
     """
     Parse interfaces
     """
 
     # Parse zones
+
+    logger.log(2, __name__ + ": parse zones")
 
     """
     Parse zones

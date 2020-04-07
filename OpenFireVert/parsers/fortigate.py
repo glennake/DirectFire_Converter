@@ -64,11 +64,15 @@ def parse(logger, src_config):
 
     # Parse interfaces
 
+    logger.log(2, __name__ + ": parse interfaces - not yet supported")
+
     """
     Parse interfaces
     """
 
     # Parse zones
+
+    logger.log(2, __name__ + ": parse zones - not yet supported")
 
     """
     Parse zones
@@ -506,7 +510,7 @@ def parse(logger, src_config):
 
     # Parse service objects
 
-    logger.log(2, __name__ + ": parse service objects")
+    logger.log(2, __name__ + ": parse service objects - not yet supported")
 
     """
     Parse service objects
@@ -514,7 +518,7 @@ def parse(logger, src_config):
 
     # Parse service groups
 
-    logger.log(2, __name__ + ": parse service groups")
+    logger.log(2, __name__ + ": parse service groups - not yet supported")
 
     """
     Parse service groups
@@ -522,7 +526,7 @@ def parse(logger, src_config):
 
     # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse firewall policies")
+    logger.log(2, __name__ + ": parse firewall policies - not yet supported")
 
     """
     Parse firewall policies
@@ -530,7 +534,7 @@ def parse(logger, src_config):
 
     # Parse NAT
 
-    logger.log(2, __name__ + ": parse NAT")
+    logger.log(2, __name__ + ": parse NAT - not yet supported")
 
     """
     Parse NAT policies

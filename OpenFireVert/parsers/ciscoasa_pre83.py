@@ -217,7 +217,7 @@ def parse(logger, src_config):
 
     # Parse system
 
-    logger.log(2, __name__ + ": parse system")
+    logger.log(2, __name__ + ": parse system - not yet supported")
 
     """
     Parse system objects such as hostname, DNS
@@ -225,11 +225,15 @@ def parse(logger, src_config):
 
     # Parse interfaces
 
+    logger.log(2, __name__ + ": parse interfaces - not yet supported")
+
     """
     Parse interfaces
     """
 
     # Parse zones
+
+    logger.log(2, __name__ + ": parse zones - not yet supported")
 
     """
     Parse zones
@@ -317,14 +321,6 @@ def parse(logger, src_config):
                 data["network_groups"][match.group(1)]["members"].append(
                     match2.group(2)
                 )
-
-    # Parse service objects
-
-    logger.log(2, __name__ + ": parse service objects")
-
-    """
-    Parse service objects
-    """
 
     # Parse service groups
 
@@ -839,7 +835,7 @@ def parse(logger, src_config):
 
     # Parse NAT
 
-    logger.log(3, __name__ + ": parse NAT not yet implemented")
+    logger.log(3, __name__ + ": parse NAT - not yet supported")
 
     """
     Parse NAT policies
