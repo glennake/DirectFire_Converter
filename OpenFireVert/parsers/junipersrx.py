@@ -341,8 +341,10 @@ def parse(logger, src_config):
 
     logger.log(2, __name__ + ": parse IPv4 network objects")
 
+    ## host and network objects
+
     for re_match in re.finditer(
-        "set security (?:zones security-zone [A-Za-z0-9_-]{1,} )?address-book(?: global)? address ([A-Za-z0-9_-]{1,}) ("
+        "set security (?:zones security-zone (?:.*?) )?address-book(?: global)? address (.*?) ("
         + common.common_regex.ipv4_address
         + ")("
         + common.common_regex.ipv4_prefix
@@ -373,6 +375,62 @@ def parse(logger, src_config):
                 network_object_prefix
             )
 
+    ## fqdn objects
+
+    for re_match in re.finditer(
+        "set security (?:zones security-zone (?:.*?) )?address-book(?: global)? address (.*?) dns-name ("
+        + common.common_regex.fqdn
+        + ")\n",
+        src_config,
+    ):
+
+        network_object_name = re_match.group(1)
+        network_object_fqdn = re_match.group(2)
+
+        data["network_objects"][network_object_name] = {}
+
+        data["network_objects"][network_object_name]["type"] = "fqdn"
+        data["network_objects"][network_object_name]["fqdn"] = network_object_fqdn
+
+    ## range objects
+
+    for re_match in re.finditer(
+        "set security (?:zones security-zone (?:.*?) )?address-book(?: global)? address (.*?) range-address ("
+        + common.common_regex.ipv4_address
+        + ") to ("
+        + common.common_regex.ipv4_address
+        + ")\n",
+        src_config,
+    ):
+
+        network_object_name = re_match.group(1)
+        network_object_address_first = re_match.group(2)
+        network_object_address_last = re_match.group(3)
+
+        data["network_objects"][network_object_name] = {}
+
+        data["network_objects"][network_object_name]["type"] = "range"
+        data["network_objects"][network_object_name][
+            "address_first"
+        ] = network_object_address_first
+        data["network_objects"][network_object_name][
+            "address_last"
+        ] = network_object_address_last
+
+    ## find description
+
+    for network_object in data["network_objects"].keys():
+
+        re_match = re.search(
+            "address " + network_object + ' description "?(.*?)"?\n', src_config
+        )
+
+        if re_match:
+            data["network_objects"][network_object]["description"] = re_match.group(1)
+
+        else:
+            data["network_objects"][network_object]["description"] = ""
+
     # Parse IPv6 network objects
 
     logger.log(2, __name__ + ": parse IPv6 network objects - not yet supported")
@@ -385,9 +443,63 @@ def parse(logger, src_config):
 
     logger.log(2, __name__ + ": parse IPv4 network groups - not yet supported")
 
-    """
-    Parse IPv4 network groups
-    """
+    ## address sets with address objects
+
+    for re_match in re.finditer(
+        "set security (?:zones security-zone (?:.*?) )?address-book(?: global)? address-set (.*?) address (.*?)\n",
+        src_config,
+    ):
+
+        network_group_name = re_match.group(1)
+        network_group_member = re_match.group(2)
+
+        if network_group_name in data["network_groups"]:
+            data["network_groups"][network_group_name]["members"].append(
+                network_group_member
+            )
+
+        else:
+            data["network_groups"][network_group_name] = {}
+            data["network_groups"][network_group_name]["members"] = []
+            data["network_groups"][network_group_name]["members"].append(
+                network_group_member
+            )
+
+    ## address sets with nested address sets
+
+    for re_match in re.finditer(
+        "set security (?:zones security-zone (?:.*?) )?address-book(?: global)? address-set (.*?) address-set (.*?)\n",
+        src_config,
+    ):
+
+        network_group_name = re_match.group(1)
+        network_group_member = re_match.group(2)
+
+        if network_group_name in data["network_groups"]:
+            data["network_groups"][network_group_name]["members"].append(
+                network_group_member
+            )
+
+        else:
+            data["network_groups"][network_group_name] = {}
+            data["network_groups"][network_group_name]["members"] = []
+            data["network_groups"][network_group_name]["members"].append(
+                network_group_member
+            )
+
+    ## find description
+
+    for network_group in data["network_groups"].keys():
+
+        re_match = re.search(
+            "address-set " + network_group + ' description "?(.*?)"?\n', src_config
+        )
+
+        if re_match:
+            data["network_groups"][network_group]["description"] = re_match.group(1)
+
+        else:
+            data["network_groups"][network_group]["description"] = ""
 
     # Parse IPv6 network groups
 
@@ -420,6 +532,8 @@ def parse(logger, src_config):
     """
     Parse firewall policies
     """
+
+    ## remember any, any-ipv4 and any-ipv6
 
     # Parse NAT
 
