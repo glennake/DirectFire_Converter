@@ -92,9 +92,14 @@ def parse(logger, src_config):
             data["routes"][route_id] = {}
 
             re_match = re.search(
-                "set dst ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}) ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})\n",
+                "set dst ("
+                + common.common_regex.ipv4_address
+                + ") ("
+                + common.common_regex.ipv4_mask
+                + ")\n",
                 route,
             )
+
             data["routes"][route_id]["network"] = re_match.group(1)
             data["routes"][route_id]["mask"] = re_match.group(2)
 
