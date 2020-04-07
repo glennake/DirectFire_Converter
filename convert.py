@@ -56,7 +56,7 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     "-s",
     "--source",
-    choices=["ciscoasa_pre83", "fortigate", "watchguard"],
+    choices=["ciscoasa_pre83", "fortigate", "junipersrx", "watchguard"],
     help="source format",
     required=True,
 )
@@ -115,8 +115,20 @@ def parse(src_format, src_config):
     elif src_format == "fortigate":
         from OpenFireVert.parsers.fortigate import parse
 
+    elif src_format == "junipersrx":
+        from OpenFireVert.parsers.junipersrx import parse
+
     elif src_format == "watchguard":
         from OpenFireVert.parsers.watchguard import parse
+
+    else:
+        logger.log(
+            2, "OpenFireVert.parse: failed to load parser module for " + src_format
+        )
+
+        print(f"{Fore.RED}Error: failed to load parser module.{Style.RESET_ALL}")
+
+        exit()
 
     logger.log(2, "OpenFireVert.parse: loaded parser module for " + src_format)
 
@@ -138,6 +150,15 @@ def generate(dst_format, parsed_data):
 
     elif dst_format == "fortigate":
         from OpenFireVert.generators.fortigate import generate
+
+    else:
+        logger.log(
+            2, "OpenFireVert.parse: failed to load generator module for " + dst_format
+        )
+
+        print(f"{Fore.RED}Error: failed to load generator module.{Style.RESET_ALL}")
+
+        exit()
 
     logger.log(2, "OpenFireVert.generate: loaded generator module for " + dst_format)
 
