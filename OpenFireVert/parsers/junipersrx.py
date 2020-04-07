@@ -60,7 +60,7 @@ def parse(logger, src_config):
 
     logger.log(2, __name__ + ": parse system")
 
-    re_match = re.search("(set system host-name (.*?)\n)", src_config)
+    re_match = re.search("set system host-name (.*?)\n", src_config)
 
     if re_match:
         data["system"]["hostname"] = re_match.group(1)
@@ -81,7 +81,7 @@ def parse(logger, src_config):
 
     logger.log(2, __name__ + ": parse static routes")
 
-    for re_match in re.finditer(
+    for route_match in re.finditer(
         "set routing-options static route ("
         + common.common_regex.ipv4_address
         + ")("
@@ -92,12 +92,31 @@ def parse(logger, src_config):
         src_config,
     ):
 
+        route_network = route_match.group(1)
+        route_prefix = route_match.group(2)
+        route_gateway = route_match.group(3)
+
         data["routes"][route_id] = {}
 
-        data["routes"][route_id]["network"] = re_match.group(1)
-        data["routes"][route_id]["mask"] = ipv4_prefix_to_mask(re_match.group(2))
-        data["routes"][route_id]["gateway"] = re_match.group(3)
-        data["routes"][route_id]["distance"] = ""  ### need to parse distance
+        data["routes"][route_id]["network"] = route_network
+        data["routes"][route_id]["mask"] = ipv4_prefix_to_mask(route_prefix)
+        data["routes"][route_id]["gateway"] = route_gateway
+
+        re_match = re.search(
+            "set routing-options static route "
+            + route_network
+            + route_prefix
+            + " preference ([0-9]{1,3})",
+            src_config,
+        )
+
+        if re_match:
+            data["routes"][route_id]["distance"] = re_match.group(1)
+        else:
+            data["routes"][route_id][
+                "distance"
+            ] = 5  ## default admin distance for static routes is 5
+
         data["routes"][route_id]["type"] = "static"
 
         route_id += 1
