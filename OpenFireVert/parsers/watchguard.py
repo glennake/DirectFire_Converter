@@ -197,7 +197,7 @@ def parse(logger, src_config):
                     data["service_objects"][mbr_name] = {}
                     data["service_objects"][mbr_name]["type"] = "service"
                     data["service_objects"][mbr_name]["protocol"] = mbr_protocol
-                    data["service_objects"][mbr_name]["port"] = mbr_port
+                    data["service_objects"][mbr_name]["destination_port"] = mbr_port
                     data["service_objects"][mbr_name]["description"] = ""
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)
@@ -218,8 +218,12 @@ def parse(logger, src_config):
                     data["service_objects"][mbr_name] = {}
                     data["service_objects"][mbr_name]["type"] = "range"
                     data["service_objects"][mbr_name]["protocol"] = mbr_protocol
-                    data["service_objects"][mbr_name]["port_first"] = mbr_port_first
-                    data["service_objects"][mbr_name]["port_last"] = mbr_port_last
+                    data["service_objects"][mbr_name][
+                        "destination_port_first"
+                    ] = mbr_port_first
+                    data["service_objects"][mbr_name][
+                        "destination_port_last"
+                    ] = mbr_port_last
                     data["service_objects"][mbr_name]["description"] = ""
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)

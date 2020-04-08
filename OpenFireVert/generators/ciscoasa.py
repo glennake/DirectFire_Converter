@@ -134,12 +134,16 @@ def generate(logger, parsed_data):
             if attributes["protocol"] == "6":
 
                 dst_config.append("object service " + service)
-                dst_config.append(" service tcp destination eq " + attributes["port"])
+                dst_config.append(
+                    " service tcp destination eq " + attributes["destination_port"]
+                )
 
             elif attributes["protocol"] == "17":
 
                 dst_config.append("object service " + service)
-                dst_config.append(" service udp destination eq " + attributes["port"])
+                dst_config.append(
+                    " service udp destination eq " + attributes["destination_port"]
+                )
 
             elif attributes["protocol"] == "1":
 
@@ -158,9 +162,9 @@ def generate(logger, parsed_data):
                 dst_config.append("object service " + service)
                 dst_config.append(
                     " service tcp destination range "
-                    + attributes["port_first"]
+                    + attributes["destination_port_first"]
                     + " "
-                    + attributes["port_last"]
+                    + attributes["destination_port_last"]
                 )
 
             elif attributes["protocol"] == "17":
@@ -168,9 +172,9 @@ def generate(logger, parsed_data):
                 dst_config.append("object service " + service)
                 dst_config.append(
                     " service udp destination range "
-                    + attributes["port_first"]
+                    + attributes["destination_port_first"]
                     + " "
-                    + attributes["port_last"]
+                    + attributes["destination_port_last"]
                 )
 
     # Generate service groups

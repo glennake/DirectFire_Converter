@@ -158,12 +158,16 @@ def generate(logger, parsed_data):
             elif attributes["protocol"] in ["6", "tcp", "Tcp", "TCP"]:
 
                 dst_config.append("    set protocol TCP/UDP/SCTP")
-                dst_config.append("    set tcp-portrange " + attributes["port"])
+                dst_config.append(
+                    "    set tcp-portrange " + attributes["destination_port"]
+                )
 
             elif attributes["protocol"] in ["17", "udp", "Udp", "UDP"]:
 
                 dst_config.append("    set protocol TCP/UDP/SCTP")
-                dst_config.append("    set udp-portrange " + attributes["port"])
+                dst_config.append(
+                    "    set udp-portrange " + attributes["destination_port"]
+                )
 
             else:
 
@@ -177,9 +181,9 @@ def generate(logger, parsed_data):
                 dst_config.append("    set protocol TCP/UDP/SCTP")
                 dst_config.append(
                     "    set tcp-portrange "
-                    + attributes["port_first"]
+                    + attributes["destination_port_first"]
                     + "-"
-                    + attributes["port_last"]
+                    + attributes["destination_port_last"]
                 )
 
             elif attributes["protocol"] in ["17", "udp", "Udp", "UDP"]:
@@ -187,9 +191,9 @@ def generate(logger, parsed_data):
                 dst_config.append("    set protocol TCP/UDP/SCTP")
                 dst_config.append(
                     "    set udp-portrange "
-                    + attributes["port_first"]
+                    + attributes["destination_port_first"]
                     + "-"
-                    + attributes["port_last"]
+                    + attributes["destination_port_last"]
                 )
 
         dst_config.append("  next")

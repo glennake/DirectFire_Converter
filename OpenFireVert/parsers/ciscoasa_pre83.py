@@ -380,17 +380,17 @@ def parse(logger, src_config):
 
                     data["service_objects"]["tcp_" + service_name]["type"] = "range"
                     data["service_objects"]["tcp_" + service_name][
-                        "port_first"
+                        "destination_port_first"
                     ] = service_port_first
                     data["service_objects"]["tcp_" + service_name][
-                        "port_last"
+                        "destination_port_last"
                     ] = service_port_last
 
                 else:
 
                     data["service_objects"]["tcp_" + service_name]["type"] = "service"
                     data["service_objects"]["tcp_" + service_name][
-                        "port"
+                        "destination_port"
                     ] = service_port
 
                 data["service_groups"][match.group(1)]["members"].append(
@@ -407,17 +407,17 @@ def parse(logger, src_config):
 
                     data["service_objects"]["udp_" + service_name]["type"] = "range"
                     data["service_objects"]["udp_" + service_name][
-                        "port_first"
+                        "destination_port_first"
                     ] = service_port_first
                     data["service_objects"]["udp_" + service_name][
-                        "port_last"
+                        "destination_port_last"
                     ] = service_port_last
 
                 else:
 
                     data["service_objects"]["udp_" + service_name]["type"] = "service"
                     data["service_objects"]["udp_" + service_name][
-                        "port"
+                        "destination_port"
                     ] = service_port
 
                 data["service_groups"][match.group(1)]["members"].append(
@@ -438,16 +438,18 @@ def parse(logger, src_config):
 
                     data["service_objects"][service_name]["type"] = "range"
                     data["service_objects"][service_name][
-                        "port_first"
+                        "destination_port_first"
                     ] = service_port_first
                     data["service_objects"][service_name][
-                        "port_last"
+                        "destination_port_last"
                     ] = service_port_last
 
                 else:
 
                     data["service_objects"][service_name]["type"] = "service"
-                    data["service_objects"][service_name]["port"] = service_port
+                    data["service_objects"][service_name][
+                        "destination_port"
+                    ] = service_port
 
                 data["service_groups"][match.group(1)]["members"].append(service_name)
 
@@ -495,16 +497,18 @@ def parse(logger, src_config):
 
                     data["service_objects"][service_name]["type"] = "range"
                     data["service_objects"][service_name][
-                        "port_first"
+                        "destination_port_first"
                     ] = service_port_first
                     data["service_objects"][service_name][
-                        "port_last"
+                        "destination_port_last"
                     ] = service_port_last
 
                 else:
 
                     data["service_objects"][service_name]["type"] = "service"
-                    data["service_objects"][service_name]["port"] = service_port
+                    data["service_objects"][service_name][
+                        "destination_port"
+                    ] = service_port
 
             else:
 
