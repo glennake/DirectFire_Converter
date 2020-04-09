@@ -2,6 +2,7 @@
 
 # Import modules
 
+import ipaddress
 import re
 import unidecode
 
@@ -32,6 +33,66 @@ def common_regex():
     common_regex.ipv6_address = "(?:(?:[0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,7}:|(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,5}(?::[0-9a-fA-F]{1,4}){1,2}|(?:[0-9a-fA-F]{1,4}:){1,4}(?::[0-9a-fA-F]{1,4}){1,3}|(?:[0-9a-fA-F]{1,4}:){1,3}(?::[0-9a-fA-F]{1,4}){1,4}|(?:[0-9a-fA-F]{1,4}:){1,2}(?::[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:(?:(?::[0-9a-fA-F]{1,4}){1,6})|:(?:(?::[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(?::[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(?:ffff(?::0{1,4}){0,1}:){0,1}(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])|(?:[0-9a-fA-F]{1,4}:){1,4}:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9]))"
     common_regex.ipv6_mask = "(?:\/(?:12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))"
     common_regex.mac_address = "(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})"
+
+
+def interface_lookup(ip_address, interfaces):
+
+    ip_address = ipaddress.ip_address(ip_address)
+
+    interface_networks = {}
+    matching_interfaces = {}
+    selected_interface = ""
+
+    # lookup interface subnets
+
+    ## build dictionary of all interface networks
+
+    for interface, attributes in interfaces.items():
+
+        if attributes["ip_config"]:
+
+            for ip_config in attributes["ip_config"]:
+
+                interface_networks[interface] = ipaddress.IPv4Interface(
+                    ip_config["ip_address"] + "/" + ip_config["mask"]
+                )
+
+    ## check if ip address matches any interface networks
+
+    for interface, network in interface_networks.items():
+
+        if ip_address in network.network:
+
+            matching_interfaces[interface] = network
+
+    ## if multiple matching interfaces find the most specific
+
+    if len(matching_interfaces) == 1:
+
+        selected_interface = list(matching_interfaces)[0]
+
+    elif len(matching_interfaces) > 1:
+
+        for interface, network in matching_interfaces.items():
+
+            if selected_interface:
+
+                if network.network.netmask > selected_interface_network.network.netmask:
+
+                    selected_interface = interface
+                    selected_interface_network = network
+            else:
+
+                selected_interface = interface
+                selected_interface_network = network
+
+    else:
+
+        selected_interface = ""
+
+    ## return interface name from the lookup
+
+    return selected_interface
 
 
 def ipv4_prefix_to_mask(prefix):
