@@ -13,6 +13,7 @@ import OpenFireVert.settings as settings
 # Initialise common functions
 
 cleanse_names = common.cleanse_names
+interface_lookup = common.interface_lookup
 
 
 def parse(logger, src_config):
@@ -91,6 +92,8 @@ def parse(logger, src_config):
         data["routes"][routes_key]["network"] = route.find("dest-address").text
         data["routes"][routes_key]["mask"] = route.find("mask").text
         data["routes"][routes_key]["gateway"] = route.find("gateway-ip").text
+        ### need to parse interfaces then can lookup and add to route
+        # data["routes"][routes_key]["interface"] = interface_lookup()
         data["routes"][routes_key]["distance"] = route.find("metric").text
         data["routes"][routes_key][
             "interface"
@@ -267,6 +270,7 @@ def parse(logger, src_config):
         data["policies"][policy_id]["description"] = policy.find("description").text
         data["policies"][policy_id]["src_interface"] = ""
         data["policies"][policy_id]["dst_interface"] = ""
+        data["policies"][policy_id]["policy_set"] = ""
         data["policies"][policy_id]["protocol"] = ""
         data["policies"][policy_id]["src_address"] = ""
         data["policies"][policy_id]["src_address_type"] = ""

@@ -205,7 +205,7 @@ def generate(logger, parsed_data):
 
         rule_command = "extended " + rule_action
 
-        if attributes["dst_service"] == any:
+        if attributes["dst_service"] == "any":
             rule_command = rule_command + " ip"
         else:
             if attributes["dst_service_type"] == "service":
@@ -236,23 +236,33 @@ def generate(logger, parsed_data):
         if attributes["enabled"] == False:
             rule_command = rule_command + " inactive"
 
-        rule_command = (
-            "access-list " + attributes["src_interface"] + "_in " + rule_command
-        )
+        if attributes["policy_set"]:
 
-        if attributes["src_interface"] not in access_lists:
-            access_lists[attributes["src_interface"]] = []
+            rule_command = (
+                "access-list " + attributes["policy_set"] + " " + rule_command
+            )
 
-        access_lists[attributes["src_interface"]].append(rule_command)
+        else:
 
-    for access_list, commands in access_lists.items():
-        for command in commands:
-            dst_config.append(command)
+            rule_command = (
+                "access-list " + attributes["src_interface"] + "_in " + rule_command
+            )
 
-    for access_list in access_lists.keys():
-        dst_config.append(
-            "access-group " + access_list + "_in in interface " + access_list
-        )
+        dst_config.append(rule_command)
+
+    #     if attributes["src_interface"] not in access_lists:
+    #         access_lists[attributes["src_interface"]] = []
+
+    #     access_lists[attributes["src_interface"]].append(rule_command)
+
+    # for access_list, commands in access_lists.items():
+    #     for command in commands:
+    #         dst_config.append(command)
+
+    # for access_list in access_lists.keys():
+    #     dst_config.append(
+    #         "access-group " + access_list + "_in in interface " + access_list
+    #     )
 
     # Generate NAT
 

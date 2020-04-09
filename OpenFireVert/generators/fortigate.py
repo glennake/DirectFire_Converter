@@ -73,6 +73,7 @@ def generate(logger, parsed_data):
         dst_config.append(
             "    set dst " + attributes["network"] + " " + attributes["mask"]
         )
+        dst_config.append("    set device " + attributes["interface"])
         dst_config.append("    set gateway " + attributes["gateway"])
         dst_config.append("    set distance " + attributes["distance"])
         dst_config.append("  next")

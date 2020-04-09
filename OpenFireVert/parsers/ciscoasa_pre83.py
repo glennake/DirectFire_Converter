@@ -534,40 +534,45 @@ def parse(logger, src_config):
         src_config,
     ):
 
-        if match.group(1) not in data["policies"]:
-
-            data["policies"][match.group(1)] = {}
-
-        data["policies"][match.group(1)][policy_id] = {}
-
-        data["policies"][match.group(1)][policy_id]["id"] = policy_id
-        data["policies"][match.group(1)][policy_id]["type"] = "policy"
-        data["policies"][match.group(1)][policy_id]["src_interface"] = ""
-        data["policies"][match.group(1)][policy_id]["dst_interface"] = ""
-        data["policies"][match.group(1)][policy_id]["protocol"] = match.group(4)
-        data["policies"][match.group(1)][policy_id]["src_address"] = ""
-        data["policies"][match.group(1)][policy_id]["src_address_type"] = ""
-        data["policies"][match.group(1)][policy_id]["dst_address"] = ""
-        data["policies"][match.group(1)][policy_id]["dst_address_type"] = ""
-        data["policies"][match.group(1)][policy_id]["src_service"] = ""
-        data["policies"][match.group(1)][policy_id]["src_service_type"] = ""
-        data["policies"][match.group(1)][policy_id]["dst_service"] = ""
-        data["policies"][match.group(1)][policy_id]["dst_service_type"] = ""
-        data["policies"][match.group(1)][policy_id]["action"] = match.group(3)
-        data["policies"][match.group(1)][policy_id]["disabled"] = False
-        data["policies"][match.group(1)][policy_id]["logging"] = False
-        data["policies"][match.group(1)][policy_id]["comment"] = ""
-
         # Check if the entry is a remark
 
-        if "remark" in match.group(2):
+        ### need to fix remarks
 
-            data["policies"][match.group(1)][policy_id]["type"] = "remark"
-            data["policies"][match.group(1)][policy_id]["comment"] = match.group(2)[7:]
+        # if "remark" in match.group(2):
 
-        # If not then get all policy objects
+        #     data["policies"][policy_id]["type"] = "remark"
+        #     data["policies"][policy_id]["comment"] = match.group(2)[7:]
 
-        else:
+        # # If not then get all policy objects
+
+        if "remark" not in match.group(2):
+
+            data["policies"][policy_id] = {}
+
+            data["policies"][policy_id]["id"] = policy_id
+            data["policies"][policy_id]["type"] = "policy"
+            data["policies"][policy_id]["policy_set"] = match.group(1)
+            data["policies"][policy_id]["src_interface"] = ""
+            data["policies"][policy_id]["dst_interface"] = ""
+            data["policies"][policy_id]["protocol"] = match.group(4)
+            data["policies"][policy_id]["src_address"] = ""
+            data["policies"][policy_id]["src_address_type"] = ""
+            data["policies"][policy_id]["dst_address"] = ""
+            data["policies"][policy_id]["dst_address_type"] = ""
+            data["policies"][policy_id]["src_service"] = ""
+            data["policies"][policy_id]["src_service_type"] = ""
+            data["policies"][policy_id]["dst_service"] = ""
+            data["policies"][policy_id]["dst_service_type"] = ""
+            data["policies"][policy_id]["action"] = ""
+            data["policies"][policy_id]["enabled"] = True
+            data["policies"][policy_id]["logging"] = False
+            data["policies"][policy_id]["comment"] = ""
+
+            if match.group(3) == "permit":
+                data["policies"][policy_id]["action"] = "allow"
+
+            elif match.group(3) == "deny":
+                data["policies"][policy_id]["action"] = "discard"
 
             ### Need to add checks for policy service object group, protocol group and single protocol
 
@@ -598,40 +603,32 @@ def parse(logger, src_config):
 
             if policy_src_any:
 
-                data["policies"][match.group(1)][policy_id]["src_address"] = "any"
-                data["policies"][match.group(1)][policy_id]["src_address_type"] = "any"
+                data["policies"][policy_id]["src_address"] = "any"
+                data["policies"][policy_id]["src_address_type"] = "any"
                 policy_src = policy_src_any
 
             # Check if groups and parse vars
 
             if policy_src_group:
 
-                data["policies"][match.group(1)][policy_id][
-                    "src_address"
-                ] = policy_src_group.group(1)
-                data["policies"][match.group(1)][policy_id][
-                    "src_address_type"
-                ] = "group"
+                data["policies"][policy_id]["src_address"] = policy_src_group.group(1)
+                data["policies"][policy_id]["src_address_type"] = "group"
                 policy_src = policy_src_group
 
             # Check if network object and parse vars
 
             if policy_src_addr:
 
-                data["policies"][match.group(1)][policy_id][
-                    "src_address"
-                ] = policy_src_addr.group(1)
-                data["policies"][match.group(1)][policy_id]["src_address_type"] = "host"
+                data["policies"][policy_id]["src_address"] = policy_src_addr.group(1)
+                data["policies"][policy_id]["src_address_type"] = "host"
                 policy_src = policy_src_addr
 
             # Check if host and parse vars
 
             if policy_src_host:
 
-                data["policies"][match.group(1)][policy_id][
-                    "src_address"
-                ] = policy_src_host.group(1)
-                data["policies"][match.group(1)][policy_id]["src_address_type"] = "host"
+                data["policies"][policy_id]["src_address"] = policy_src_host.group(1)
+                data["policies"][policy_id]["src_address_type"] = "host"
                 policy_src = policy_src_host
 
             # Check if directly specified and parse vars
@@ -640,59 +637,47 @@ def parse(logger, src_config):
 
             if policy_src_manual:
 
-                data["policies"][match.group(1)][policy_id][
-                    "src_address"
-                ] = policy_src_manual.group(1).replace(" ", "/")
-                data["policies"][match.group(1)][policy_id][
-                    "src_address_type"
-                ] = "manual"
+                data["policies"][policy_id]["src_address"] = policy_src_manual.group(
+                    1
+                ).replace(" ", "/")
+                data["policies"][policy_id]["src_address_type"] = "manual"
                 policy_src = policy_src_manual
 
             # If we have a source address then look for source service
 
-            if data["policies"][match.group(1)][policy_id]["src_address"]:
+            if data["policies"][policy_id]["src_address"]:
 
                 if policy_src[2]:
 
                     if policy_src[2] == "object-group":
 
-                        data["policies"][match.group(1)][policy_id][
-                            "src_service"
-                        ] = policy_src[3]
-                        data["policies"][match.group(1)][policy_id][
-                            "src_service_type"
-                        ] = "group"
+                        data["policies"][policy_id]["src_service"] = policy_src[3]
+                        data["policies"][policy_id]["src_service_type"] = "group"
 
                     elif policy_src[2] == "range":
 
                         ### Should probably create and reference a service object here
 
-                        data["policies"][match.group(1)][policy_id]["src_service"] = (
+                        data["policies"][policy_id]["src_service"] = (
                             resolve_default_service(policy_src[3])
                             + "-"
                             + resolve_default_service(policy_src[4])
                         )
-                        data["policies"][match.group(1)][policy_id][
-                            "src_service_type"
-                        ] = "range"
+                        data["policies"][policy_id]["src_service_type"] = "range"
 
                     elif policy_src[2] == "eq":
 
-                        data["policies"][match.group(1)][policy_id][
+                        data["policies"][policy_id][
                             "src_service"
                         ] = resolve_default_service(policy_src[3])
-                        data["policies"][match.group(1)][policy_id][
-                            "src_service_type"
-                        ] = "service"
+                        data["policies"][policy_id]["src_service_type"] = "service"
 
                     ### Need to add support for other operators here - gt, lt, neq
 
                 else:
 
-                    data["policies"][match.group(1)][policy_id]["src_service"] = "any"
-                    data["policies"][match.group(1)][policy_id][
-                        "src_service_type"
-                    ] = "any"
+                    data["policies"][policy_id]["src_service"] = "any"
+                    data["policies"][policy_id]["src_service_type"] = "any"
 
             # Get destination address(es) and port(s) if applicable
 
@@ -721,40 +706,32 @@ def parse(logger, src_config):
 
             if policy_dst_any:
 
-                data["policies"][match.group(1)][policy_id]["dst_address"] = "any"
-                data["policies"][match.group(1)][policy_id]["dst_address_type"] = "any"
+                data["policies"][policy_id]["dst_address"] = "any"
+                data["policies"][policy_id]["dst_address_type"] = "any"
                 policy_dst = policy_dst_any
 
             # Check if group and parse vars
 
             if policy_dst_group:
 
-                data["policies"][match.group(1)][policy_id][
-                    "dst_address"
-                ] = policy_dst_group.group(1)
-                data["policies"][match.group(1)][policy_id][
-                    "dst_address_type"
-                ] = "group"
+                data["policies"][policy_id]["dst_address"] = policy_dst_group.group(1)
+                data["policies"][policy_id]["dst_address_type"] = "group"
                 policy_dst = policy_dst_group
 
             # Check if network object and parse vars
 
             if policy_dst_addr:
 
-                data["policies"][match.group(1)][policy_id][
-                    "dst_address"
-                ] = policy_dst_addr.group(1)
-                data["policies"][match.group(1)][policy_id]["dst_address_type"] = "host"
+                data["policies"][policy_id]["dst_address"] = policy_dst_addr.group(1)
+                data["policies"][policy_id]["dst_address_type"] = "host"
                 policy_dst = policy_dst_addr
 
             # Check if host and parse vars
 
             if policy_dst_host:
 
-                data["policies"][match.group(1)][policy_id][
-                    "dst_address"
-                ] = policy_dst_host.group(1)
-                data["policies"][match.group(1)][policy_id]["dst_address_type"] = "host"
+                data["policies"][policy_id]["dst_address"] = policy_dst_host.group(1)
+                data["policies"][policy_id]["dst_address_type"] = "host"
                 policy_dst = policy_dst_host
 
             # Check if directly specified and parse vars
@@ -763,77 +740,65 @@ def parse(logger, src_config):
 
             if policy_dst_manual:
 
-                data["policies"][match.group(1)][policy_id][
-                    "dst_address"
-                ] = policy_dst_manual.group(1).replace(" ", "/")
-                data["policies"][match.group(1)][policy_id][
-                    "dst_address_type"
-                ] = "manual"
+                data["policies"][policy_id]["dst_address"] = policy_dst_manual.group(
+                    1
+                ).replace(" ", "/")
+                data["policies"][policy_id]["dst_address_type"] = "manual"
                 policy_dst = policy_dst_manual
 
             # If we have a destination address then look for destination service
 
-            if data["policies"][match.group(1)][policy_id]["dst_address"]:
+            if data["policies"][policy_id]["dst_address"]:
 
                 if policy_dst[2]:
 
                     if policy_dst[2] == "object-group":
 
-                        data["policies"][match.group(1)][policy_id][
-                            "dst_service"
-                        ] = policy_dst[3]
-                        data["policies"][match.group(1)][policy_id][
-                            "dst_service_type"
-                        ] = "group"
+                        data["policies"][policy_id]["dst_service"] = policy_dst[3]
+                        data["policies"][policy_id]["dst_service_type"] = "group"
 
                     elif policy_dst[2] == "range":
 
                         ### Should probably create and reference a service object here
 
-                        data["policies"][match.group(1)][policy_id]["dst_service"] = (
+                        data["policies"][policy_id]["dst_service"] = (
                             resolve_default_service(policy_dst[3])
                             + "-"
                             + resolve_default_service(policy_dst[4])
                         )
-                        data["policies"][match.group(1)][policy_id][
-                            "dst_service_type"
-                        ] = "range"
+                        data["policies"][policy_id]["dst_service_type"] = "range"
 
                     elif policy_dst[2] == "eq":
 
-                        data["policies"][match.group(1)][policy_id][
+                        data["policies"][policy_id][
                             "dst_service"
                         ] = resolve_default_service(policy_dst[3])
-                        data["policies"][match.group(1)][policy_id][
-                            "dst_service_type"
-                        ] = "service"
+                        data["policies"][policy_id]["dst_service_type"] = "service"
 
                     ### Need to add support for other operators here - gt, lt, neq
 
                 else:
 
-                    data["policies"][match.group(1)][policy_id]["dst_service"] = "any"
-                    data["policies"][match.group(1)][policy_id][
-                        "dst_service_type"
-                    ] = "any"
+                    data["policies"][policy_id]["dst_service"] = "any"
+                    data["policies"][policy_id]["dst_service_type"] = "any"
 
             # Check if logging enabled
 
             if match.group(7) == "log":
 
-                data["policies"][match.group(1)][policy_id]["logging"] = True
+                data["policies"][policy_id]["logging"] = True
 
             # Check if policy disabled
 
             if match.group(8) == "disable":
 
-                data["policies"][match.group(1)][policy_id]["disabled"] = True
+                data["policies"][policy_id]["enabled"] = False
 
             # Check if policy inactive
 
             if match.group(9) == "inactive":
 
-                data["policies"][match.group(1)][policy_id]["disabled"] = True
+                data["policies"][policy_id]["enabled"] = False
 
         policy_id += 1
 
