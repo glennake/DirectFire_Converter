@@ -59,7 +59,7 @@ All notable changes to this project will be documented in this file.
 
 - Bug fixes in Fortinet FortiGate parser
 
-## [0.0.8] - 2020-04-07=9
+## [0.0.8] - 2020-04-09
 
 ### Added
 
