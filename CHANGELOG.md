@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Initial conversion engine with modular design
-- Support for parsing WatchGuard
-- Support for generating FortiGate
+- Initial support for parsing WatchGuard
+- Initial support for generating Fortinet FortiGate
 
 ## [0.0.2] - 2020-03-31
 
@@ -16,13 +16,13 @@ All notable changes to this project will be documented in this file.
 
 - Module template for parsers
 - Module template for generators
-- Support for parsing Cisco ASA pre-8.3
+- Initial support for parsing Cisco ASA pre-8.3
 
 ## [0.0.3] - 2020-04-01
 
 ### Added
 
-- Support for generating Cisco ASA post-8.3
+- Initial support for generating Cisco ASA post-8.3
 
 ## [0.0.4] - 2020-04-06
 
@@ -45,16 +45,27 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Support for parsing FortiGate
+- Initial support for parsing Fortinet FortiGate
 
 ## [0.0.7] - 2020-04-07
 
 ### Added
 
-- Support for parsing Juniper SRX (JunOS)
-- Missing logging for interfaces and zone parsing
+- Initial support for parsing Juniper SRX (JunOS)
+- Missing logging for interfaces and zones across parsers
 - Improved logging for unsupported features when parsing
 
 ### Changed
 
-- Bug fixes in FortiGate parser
+- Bug fixes in Fortinet FortiGate parser
+
+## [0.0.8] - 2020-04-07=9
+
+### Added
+
+- Support for parsing Juniper SRX (JunOS) interfaces
+- Enhancements for parsing Juniper SRX (JunOS) routes
+
+### Changed
+
+- Bug fixes in parsers - Cisco ASA (pre and post 8.3), Fortinet FortiGate, WatchGuard
