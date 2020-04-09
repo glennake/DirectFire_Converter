@@ -5,12 +5,29 @@ set system name-server 8.8.4.4
 set system ntp server 1.1.1.3
 set interfaces ge-0/0/0 description "WAN"
 set interfaces ge-0/0/0 unit 0 family inet address 1.1.1.2/28
-set interfaces ge-0/0/1 description "LAN"
-set interfaces ge-0/0/1 unit 0 family ethernet-switching vlan members vlan-trust
+set interfaces ge-0/0/1 description "DMZ"
+set interfaces ge-0/0/1 unit 0 description "DMZ1"
+set interfaces ge-0/0/1 unit 0 disable
+set interfaces ge-0/0/1 unit 0 family inet address 192.168.123.1/24
+set interfaces ge-0/0/2 vlan-tagging
+set interfaces ge-0/0/2 unit 200 vlan-id 200
+set interfaces ge-0/0/2 unit 200 family inet address 192.168.200.1/24
+set interfaces ge-0/0/2 unit 200 family inet address 192.168.200.253/24
+set interfaces ge-0/0/2 unit 200 family inet address 192.168.200.254/24
+set interfaces ge-0/0/2 unit 201 vlan-id 201
+set interfaces ge-0/0/2 unit 201 family inet address 192.168.201.1/24
+set interfaces ge-0/0/2 unit 201 family inet address 192.168.201.254/24
+set interfaces ge-0/0/3 description "LAN"
+set interfaces ge-0/0/3 disable
+set interfaces ge-0/0/3 unit 0 family ethernet-switching vlan members vlan-trust
+set interfaces ge-0/0/4 unit 0 family inet address 1.1.1.254/24
 set interfaces lo0 description "LOOPBACK"
 set interfaces lo0 unit 0 family inet filter input protect-re
 set interfaces lo0 unit 0 family inet address 127.0.0.1/32
 set interfaces vlan unit 0 family inet address 10.0.0.1/24
+set interfaces vlan unit 110 description "VLAN 110 - NOT IN USE"
+set interfaces vlan unit 110 disable
+set interfaces vlan unit 110 family inet address 10.0.0.1/24
 set routing-options static route 0.0.0.0/0 next-hop 1.1.1.1
 set routing-options static route 10.0.0.0/24 next-hop 10.0.0.254
 set routing-options static route 10.0.0.0/24 preference 10
@@ -70,3 +87,5 @@ set applications application 9000 term 2 protocol udp
 set applications application 9000 term 2 destination-port 9000
 set vlans vlan-trust vlan-id 3
 set vlans vlan-trust l3-interface vlan.0
+set vlans vlan-lan1 vlan-id 110
+set vlans vlan-lan1 l3-interface vlan.110

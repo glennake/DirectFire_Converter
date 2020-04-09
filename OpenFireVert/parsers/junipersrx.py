@@ -14,6 +14,7 @@ import OpenFireVert.settings as settings
 
 cleanse_names = common.cleanse_names
 common.common_regex()
+interface_lookup = common.interface_lookup
 ipv4_prefix_to_mask = common.ipv4_prefix_to_mask
 
 
@@ -72,7 +73,7 @@ def parse(logger, src_config):
     default_service_objects["junos-ftp"]["destination_port"] = "21"
     default_service_objects["junos-ftp"]["protocol"] = "6"
     default_service_objects["junos-ftp"]["source_port"] = ""
-    default_service_objects["junos-ttp"]["type"] = ""
+    default_service_objects["junos-ftp"]["type"] = ""
 
     default_service_objects["junos-ftp-data"] = {}
     default_service_objects["junos-ftp-data"]["description"] = ""
@@ -1248,9 +1249,201 @@ def parse(logger, src_config):
 
     logger.log(2, __name__ + ": parse interfaces - not yet supported")
 
-    """
-    Parse interfaces
-    """
+    ## physical interfaces and sub interfaces
+
+    for re_match in re.finditer(
+        "set interfaces ((?:pp|reth|ae|fe|ge|xe|xle|et)(?:-[0-9]{1,2}/[0-9]{1,2}/)?[0-9]{1,2}) unit ([0-9]{1,4}) family inet address ("
+        + common.common_regex.ipv4_address
+        + ")("
+        + common.common_regex.ipv4_prefix
+        + ")\n",
+        src_config,
+    ):
+
+        interface_phys_name = re_match.group(1)
+
+        if interface_phys_name not in data["interfaces"]:
+            data["interfaces"][interface_phys_name] = {}
+            data["interfaces"][interface_phys_name]["enabled"] = ""
+            data["interfaces"][interface_phys_name]["description"] = ""
+            data["interfaces"][interface_phys_name]["ip_config"] = []
+            data["interfaces"][interface_phys_name]["physical_interfaces"] = []
+            data["interfaces"][interface_phys_name]["type"] = "interface"
+            data["interfaces"][interface_phys_name]["vlan_id"] = ""
+            data["interfaces"][interface_phys_name]["vlan_name"] = ""
+
+        interface_name = re_match.group(1) + "." + re_match.group(2)
+
+        if interface_name in data["interfaces"]:
+
+            interface_ip_member = {}
+            interface_ip_member["ip_address"] = re_match.group(3)
+            interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(4))
+            interface_ip_member["type"] = "secondary"
+
+            data["interfaces"][interface_name]["ip_config"].append(interface_ip_member)
+
+        else:
+
+            data["interfaces"][interface_name] = {}
+
+            data["interfaces"][interface_name]["enabled"] = ""
+            data["interfaces"][interface_name]["description"] = ""
+
+            data["interfaces"][interface_name]["ip_config"] = []
+
+            interface_ip_member = {}
+            interface_ip_member["ip_address"] = re_match.group(3)
+            interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(4))
+            interface_ip_member["type"] = "primary"
+
+            data["interfaces"][interface_name]["ip_config"].append(interface_ip_member)
+
+            data["interfaces"][interface_name]["physical_interfaces"] = []
+            data["interfaces"][interface_name]["physical_interfaces"].append(
+                re_match.group(1)
+            )
+
+            data["interfaces"][interface_name]["type"] = "subinterface"
+            data["interfaces"][interface_name]["vlan_id"] = ""
+            data["interfaces"][interface_name]["vlan_name"] = ""
+
+    ## find sub interface vlan tag
+
+    for interface in data["interfaces"].keys():
+
+        if "." in interface:
+            interface_name = interface.replace(".", " unit ")
+        else:
+            interface_name = interface
+
+        re_match = re.search(
+            "set interfaces " + interface_name + " vlan-id ([0-9]{1,4})\n", src_config
+        )
+
+        if re_match:
+            data["interfaces"][interface]["vlan_id"] = re_match.group(1)
+
+        else:
+            data["interfaces"][interface]["vlan_id"] = "0"
+
+    ## vlan interfaces
+
+    for re_match in re.finditer(
+        "set interfaces vlan unit ([0-9]{1,4}) family inet address ("
+        + common.common_regex.ipv4_address
+        + ")("
+        + common.common_regex.ipv4_prefix
+        + ")\n",
+        src_config,
+    ):
+
+        interface_name = "vlan." + re_match.group(1)
+
+        if interface_name in data["interfaces"]:
+
+            interface_ip_member = {}
+            interface_ip_member["ip_address"] = re_match.group(2)
+            interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(3))
+            interface_ip_member["type"] = "secondary"
+
+            data["interfaces"][interface_name]["ip_config"].append(interface_ip_member)
+
+        else:
+
+            data["interfaces"][interface_name] = {}
+
+            data["interfaces"][interface_name]["enabled"] = ""
+            data["interfaces"][interface_name]["description"] = ""
+
+            data["interfaces"][interface_name]["ip_config"] = []
+
+            interface_ip_member = {}
+            interface_ip_member["ip_address"] = re_match.group(2)
+            interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(3))
+            interface_ip_member["type"] = "primary"
+
+            data["interfaces"][interface_name]["ip_config"].append(interface_ip_member)
+
+            data["interfaces"][interface_name]["physical_interfaces"] = []
+
+            data["interfaces"][interface_name]["type"] = "switch"
+            data["interfaces"][interface_name]["vlan_id"] = ""
+            data["interfaces"][interface_name]["vlan_name"] = ""
+
+    ## find vlan interface vlan tag
+
+    for re_match in re.finditer(
+        "set vlans (.*?) l3-interface vlan.([0-9]{1,4})", src_config
+    ):
+
+        vlan_name = re_match.group(1)
+        interface_name = "vlan." + re_match.group(2)
+
+        if interface_name in data["interfaces"]:
+
+            re_match = re.search(
+                "set vlans " + vlan_name + " vlan-id ([0-9]{1,4})", src_config
+            )
+
+            data["interfaces"][interface_name]["vlan_id"] = re_match.group(1)
+            data["interfaces"][interface_name]["vlan_name"] = vlan_name
+
+    ## find vlan switch interface members
+
+    for interface, attributes in data["interfaces"].items():
+
+        if attributes["type"] == "switch":
+
+            interface_name = interface
+
+            for re_match in re.finditer(
+                "set interfaces ((?:pp|reth|ae|fe|ge|xe|xle|et)(?:-[0-9]{1,2}/[0-9]{1,2}/)?[0-9]{1,2}) unit ([0-9]{1,4}) family ethernet-switching vlan members "
+                + attributes["vlan_name"],
+                src_config,
+            ):
+
+                data["interfaces"][interface_name]["physical_interfaces"].append(
+                    re_match.group(1)
+                )
+
+    ## find disable
+
+    for interface in data["interfaces"].keys():
+
+        if "." in interface:
+            interface_name = interface.replace(".", " unit ")
+        else:
+            interface_name = interface
+
+        re_match = re.search(
+            "set interfaces " + interface_name + " disable\n", src_config
+        )
+
+        if re_match:
+            data["interfaces"][interface]["enabled"] = False
+
+        else:
+            data["interfaces"][interface]["enabled"] = True
+
+    ## find description
+
+    for interface in data["interfaces"].keys():
+
+        if "." in interface:
+            interface_name = interface.replace(".", " unit ")
+        else:
+            interface_name = interface
+
+        re_match = re.search(
+            "set interfaces " + interface_name + ' description "?(.*?)"?\n', src_config
+        )
+
+        if re_match:
+            data["interfaces"][interface]["description"] = re_match.group(1)
+
+        else:
+            data["interfaces"][interface]["description"] = ""
 
     # Parse zones
 
@@ -1301,6 +1494,10 @@ def parse(logger, src_config):
             ] = "5"  ## default admin distance for static routes is 5
 
         data["routes"][route_id]["type"] = "static"
+
+        data["routes"][route_id]["interface"] = interface_lookup(
+            route_gateway, data["interfaces"]
+        )
 
         route_id += 1
 
@@ -1421,16 +1618,20 @@ def parse(logger, src_config):
         network_group_member = re_match.group(2)
 
         if network_group_name in data["network_groups"]:
+
             data["network_groups"][network_group_name]["members"].append(
                 network_group_member
             )
 
         else:
+
             data["network_groups"][network_group_name] = {}
             data["network_groups"][network_group_name]["members"] = []
             data["network_groups"][network_group_name]["members"].append(
                 network_group_member
             )
+
+            data["network_groups"][network_group_name]["type"] = "group"
 
     ## address sets with nested address sets
 
@@ -1443,16 +1644,20 @@ def parse(logger, src_config):
         network_group_member = re_match.group(2)
 
         if network_group_name in data["network_groups"]:
+
             data["network_groups"][network_group_name]["members"].append(
                 network_group_member
             )
 
         else:
+
             data["network_groups"][network_group_name] = {}
             data["network_groups"][network_group_name]["members"] = []
             data["network_groups"][network_group_name]["members"].append(
                 network_group_member
             )
+
+            data["network_groups"][network_group_name]["type"] = "group"
 
     ## find description
 
@@ -1501,6 +1706,8 @@ def parse(logger, src_config):
     """
 
     ## remember any, any-ipv4 and any-ipv6
+
+    ## check if default service objects or groups are in use and add to data if so
 
     # Parse NAT
 
