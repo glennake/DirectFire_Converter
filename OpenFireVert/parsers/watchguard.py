@@ -264,27 +264,60 @@ def parse(logger, src_config):
     for policy in src_policies:
 
         data["policies"][policy_id] = {}
-        data["policies"][policy_id]["id"] = policy_id
-        data["policies"][policy_id]["type"] = "policy"
-        data["policies"][policy_id]["name"] = policy.find("name").text
-        data["policies"][policy_id]["description"] = policy.find("description").text
-        data["policies"][policy_id]["src_interface"] = ""
-        data["policies"][policy_id]["dst_interface"] = ""
-        data["policies"][policy_id]["policy_set"] = ""
-        data["policies"][policy_id]["protocol"] = ""
-        data["policies"][policy_id]["src_address"] = ""
-        data["policies"][policy_id]["src_address_type"] = ""
-        data["policies"][policy_id]["dst_address"] = ""
-        data["policies"][policy_id]["dst_address_type"] = ""
-        data["policies"][policy_id]["src_service"] = ""
-        data["policies"][policy_id]["src_service_type"] = ""
-        data["policies"][policy_id]["dst_service"] = ""
-        data["policies"][policy_id]["dst_service_type"] = ""
+
         data["policies"][policy_id]["action"] = ""
-        data["policies"][policy_id]["nat"] = policy.find("nat").text
-        data["policies"][policy_id]["enabled"] = True
-        data["policies"][policy_id]["logging"] = False
-        data["policies"][policy_id]["comment"] = ""
+        data["policies"][policy_id]["description"] = policy.find("description").text
+        data["policies"][policy_id]["dst_address"] = []
+        data["policies"][policy_id]["dst_interface"] = []
+        data["policies"][policy_id]["dst_service"] = []
+        data["policies"][policy_id]["enabled"] = (
+            False if policy.find("enable").text == "0" else True
+        )
+        data["policies"][policy_id]["id"] = policy_id
+        data["policies"][policy_id]["logging"] = (
+            False if policy.find("log").text == "0" else True
+        )
+        data["policies"][policy_id]["name"] = policy.find("name").text
+        data["policies"][policy_id][
+            "nat"
+        ] = ""  ### many values here - nat, global-1to1-nat, global-dnat
+        data["policies"][policy_id]["nat_src_address"] = ""
+        data["policies"][policy_id]["policy_set"] = ""
+        data["policies"][policy_id]["protocol"] = "any"
+        data["policies"][policy_id]["schedule"] = policy.find("schedule").text
+        data["policies"][policy_id]["src_address"] = []
+        data["policies"][policy_id]["src_interface"] = []
+        data["policies"][policy_id]["src_service"] = ["any"]
+        data["policies"][policy_id]["type"] = "policy"
+        data["policies"][policy_id]["users"] = []
+
+        ## find desination addresses
+
+        for dst_alias in policy.find("to-alias-list").findall("alias"):
+            if dst_alias.text == "Any":
+                data["policies"][policy_id]["dst_address"].append("any")
+            else:
+                data["policies"][policy_id]["dst_address"].append(dst_alias.text)
+
+        ## find desination services
+
+        for dst_service in policy.findall("service"):
+            if dst_service.text == "Any":
+                data["policies"][policy_id]["dst_service"].append("any")
+            else:
+                data["policies"][policy_id]["dst_service"].append(dst_service.text)
+
+        ## find source addresses
+
+        for src_alias in policy.find("from-alias-list").findall("alias"):
+            if src_alias.text == "Any":
+                data["policies"][policy_id]["src_address"].append("any")
+            else:
+                data["policies"][policy_id]["src_address"].append(src_alias.text)
+
+        ### need to lookup interface for destination alias
+
+        ### need to lookup interface for source alias
 
         policy_id += 1
 
