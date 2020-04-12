@@ -64,11 +64,150 @@ def parse(logger, src_config):
 
     # Parse interfaces
 
-    logger.log(2, __name__ + ": parse interfaces - not yet supported")
+    logger.log(2, __name__ + ": parse interfaces")
 
-    """
-    Parse interfaces
-    """
+    interface_routes = []
+
+    interfaces = src_config_xml.findall("./interface-list/interface")
+
+    for interface in interfaces:
+
+        interface_name = interface.find("name").text
+
+        data["interfaces"][interface_name] = {}
+        data["interfaces"][interface_name]["enabled"] = True
+        data["interfaces"][interface_name]["description"] = (
+            interface.find("description").text if interface.find("description") else ""
+        )
+        data["interfaces"][interface_name]["ipv4_config"] = []
+        data["interfaces"][interface_name]["mtu"] = ""
+        data["interfaces"][interface_name]["physical_interfaces"] = []
+        data["interfaces"][interface_name]["type"] = "interface"
+        data["interfaces"][interface_name]["vlan_id"] = ""
+        data["interfaces"][interface_name]["vlan_name"] = ""
+
+        if interface_name not in [
+            "Any",
+            "Any-BOVPN",
+            "Any-External",
+            "Any-Multicast",
+            "Any-MUVPN",
+            "Any-Optional",
+            "Any-Trusted",
+            "Any-VPN",
+            "Firebox",
+            "Tunnel-Switch",
+        ]:
+
+            data["interfaces"][interface_name] = {}
+            data["interfaces"][interface_name]["enabled"] = True
+            data["interfaces"][interface_name]["description"] = (
+                interface.find("description").text
+                if interface.find("description")
+                else ""
+            )
+            data["interfaces"][interface_name]["ipv4_config"] = []
+            data["interfaces"][interface_name]["ipv6_config"] = []
+            data["interfaces"][interface_name]["mtu"] = ""
+            data["interfaces"][interface_name]["physical_interfaces"] = []
+            data["interfaces"][interface_name]["vlan_id"] = ""
+            data["interfaces"][interface_name]["vlan_name"] = ""
+
+            interface_items = interface.findall("./if-item-list/item")
+
+            for item in interface_items:
+
+                physical_interface = item.find("physical-if")
+
+                if physical_interface:
+
+                    # find interface enabled
+
+                    if physical_interface.find("mtu").text == "0":
+                        data["interfaces"][interface_name]["enabled"] = False
+                    else:
+                        data["interfaces"][interface_name]["enabled"] = True
+
+                    # if ipv4
+
+                    if physical_interface.find("ip-node-type").text == "IP4_ONLY":
+
+                        # find interface primary ip config
+
+                        interface_ip_member = {}
+                        interface_ip_member["ip_address"] = physical_interface.find(
+                            "ip"
+                        ).text
+                        interface_ip_member["mask"] = physical_interface.find(
+                            "netmask"
+                        ).text
+                        interface_ip_member["type"] = "primary"
+
+                        if interface_ip_member["ip_address"] not in ["", "0.0.0.0"]:
+                            data["interfaces"][interface_name]["ipv4_config"].append(
+                                interface_ip_member
+                            )
+
+                        # find interface secondary ip config
+
+                        secondary_ip = physical_interface.findall(
+                            "./secondary-ip-list/secondary-ip"
+                        )
+
+                        for ipv4_config in secondary_ip:
+
+                            interface_ip_member = {}
+                            interface_ip_member["ip_address"] = ipv4_config.find(
+                                "ip"
+                            ).text
+                            interface_ip_member["mask"] = ipv4_config.find(
+                                "netmask"
+                            ).text
+
+                            if (
+                                len(data["interfaces"][interface_name]["ipv4_config"])
+                                == 0
+                            ):
+                                interface_ip_member["type"] = "primary"
+                            else:
+                                interface_ip_member["type"] = "secondary"
+
+                            if interface_ip_member["ip_address"] not in ["", "0.0.0.0"]:
+                                data["interfaces"][interface_name][
+                                    "ipv4_config"
+                                ].append(interface_ip_member)
+
+                    ### need to add ipv6 support
+
+                    # find interface mtu
+
+                    data["interfaces"][interface_name]["mtu"] = physical_interface.find(
+                        "mtu"
+                    ).text
+
+                    # if an external interface add an interface route
+
+                    external_interface = physical_interface.find("external-if")
+
+                    if external_interface:
+
+                        interface_route = {}
+                        interface_route["gateway"] = physical_interface.find(
+                            "default-gateway"
+                        ).text
+                        interface_route["interface"] = interface_name
+
+                        interface_routes.append(interface_route)
+
+                    # set type
+
+                    data["interfaces"][interface_name]["type"] = "interface"
+
+                else:
+
+                    # probably a VPN tunnel interface
+
+                    data["interfaces"][interface_name]["type"] = "vpn"
 
     # Parse zones
 
@@ -86,18 +225,29 @@ def parse(logger, src_config):
 
     routes_key = 1
 
+    for interface_route in interface_routes:
+
+        data["routes"][routes_key] = {}
+        data["routes"][routes_key]["network"] = "0.0.0.0"
+        data["routes"][routes_key]["mask"] = "0.0.0.0"
+        data["routes"][routes_key]["gateway"] = interface_route["gateway"]
+        data["routes"][routes_key]["interface"] = interface_route["interface"]
+        data["routes"][routes_key]["distance"] = "1"
+
+        routes_key += 1
+
     for route in src_routes:
+
+        route_gateway = route.find("gateway-ip").text
 
         data["routes"][routes_key] = {}
         data["routes"][routes_key]["network"] = route.find("dest-address").text
         data["routes"][routes_key]["mask"] = route.find("mask").text
-        data["routes"][routes_key]["gateway"] = route.find("gateway-ip").text
-        ### need to parse interfaces then can lookup and add to route
-        # data["routes"][routes_key]["interface"] = interface_lookup()
+        data["routes"][routes_key]["gateway"] = route_gateway
+        data["routes"][routes_key]["interface"] = interface_lookup(
+            route_gateway, data["interfaces"]
+        )
         data["routes"][routes_key]["distance"] = route.find("metric").text
-        data["routes"][routes_key][
-            "interface"
-        ] = ""  # need to resolve interface from gateway
 
         routes_key += 1
 

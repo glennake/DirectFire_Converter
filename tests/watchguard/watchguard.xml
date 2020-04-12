@@ -12,7 +12,7 @@
             <route-entry>
                 <dest-address>10.0.0.0</dest-address>
                 <mask>255.0.0.0</mask>
-                <gateway-ip>1.1.1.1</gateway-ip>
+                <gateway-ip>10.0.0.254</gateway-ip>
                 <port-type>-1</port-type>
                 <metric>1</metric>
                 <card-id>0</card-id>
@@ -303,6 +303,66 @@
                         <dhcp-server>
                             <server-type>0</server-type>
                         </dhcp-server>
+                        <vpn-df-bit>0</vpn-df-bit>
+                        <qos>
+                            <max-link-bandwidth>0</max-link-bandwidth>
+                            <qos-marking>
+                                <marking-field>2</marking-field>
+                                <marking-method>
+                                    <marking-type>0</marking-type>
+                                </marking-method>
+                                <priority-method>0</priority-method>
+                            </qos-marking>
+                        </qos>
+                        <static-mac-ip-binds>
+                            <restrict-traffic>0</restrict-traffic>
+                        </static-mac-ip-binds>
+                        <static-mac-acl>
+                            <enable>0</enable>
+                        </static-mac-acl>
+                    </physical-if>
+                </item>
+            </if-item-list>
+        </interface>
+        <interface>
+            <name>WAN1</name>
+            <dns-forwarding>0</dns-forwarding>
+            <property>0</property>
+            <if-item-list>
+                <item>
+                    <item-type>1</item-type>
+                    <physical-if>
+                        <if-num>0</if-num>
+                        <if-dev-name>eth0</if-dev-name>
+                        <enabled>1</enabled>
+                        <if-property>2</if-property>
+                        <ip-node-type>IP4_ONLY</ip-node-type>
+                        <ip>1.1.1.2</ip>
+                        <netmask>255.255.255.248</netmask>
+                        <mtu>1500</mtu>
+                        <auto-negotiation>1</auto-negotiation>
+                        <link-speed>100</link-speed>
+                        <mac-address-enable>0</mac-address-enable>
+                        <mac-address></mac-address>
+                        <full-duplex>1</full-duplex>
+                        <default-gateway>1.1.1.1</default-gateway>
+                        <secondary-ip-list>
+                            <secondary-ip>
+                                <ip>1.1.1.3</ip>
+                                <netmask>255.255.255.248</netmask>
+                            </secondary-ip>
+                        </secondary-ip-list>
+                        <anti-spoof>1</anti-spoof>
+                        <anti-scan>1</anti-scan>
+                        <block-notification>0</block-notification>
+                        <dos-prevention>1</dos-prevention>
+                        <intra-inspection>1</intra-inspection>
+                        <external-if>
+                            <external-type>1</external-type>
+                            <ddns>0</ddns>
+                        </external-if>
+                        <vpn-min-pmtu>576</vpn-min-pmtu>
+                        <vpn-aging-pmtu>600</vpn-aging-pmtu>
                         <vpn-df-bit>0</vpn-df-bit>
                         <qos>
                             <max-link-bandwidth>0</max-link-bandwidth>
