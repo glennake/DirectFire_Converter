@@ -1266,7 +1266,8 @@ def parse(logger, src_config):
             data["interfaces"][interface_phys_name] = {}
             data["interfaces"][interface_phys_name]["enabled"] = ""
             data["interfaces"][interface_phys_name]["description"] = ""
-            data["interfaces"][interface_phys_name]["ip_config"] = []
+            data["interfaces"][interface_phys_name]["ipv4_config"] = []
+            data["interfaces"][interface_phys_name]["ipv6_config"] = []
             data["interfaces"][interface_phys_name]["physical_interfaces"] = []
             data["interfaces"][interface_phys_name]["type"] = "interface"
             data["interfaces"][interface_phys_name]["vlan_id"] = ""
@@ -1281,7 +1282,7 @@ def parse(logger, src_config):
             interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(4))
             interface_ip_member["type"] = "secondary"
 
-            data["interfaces"][interface_name]["ip_config"].append(interface_ip_member)
+            data["interfaces"][interface_name]["ipv4_config"].append(interface_ip_member)
 
         else:
 
@@ -1290,14 +1291,14 @@ def parse(logger, src_config):
             data["interfaces"][interface_name]["enabled"] = ""
             data["interfaces"][interface_name]["description"] = ""
 
-            data["interfaces"][interface_name]["ip_config"] = []
+            data["interfaces"][interface_name]["ipv4_config"] = []
 
             interface_ip_member = {}
             interface_ip_member["ip_address"] = re_match.group(3)
             interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(4))
             interface_ip_member["type"] = "primary"
 
-            data["interfaces"][interface_name]["ip_config"].append(interface_ip_member)
+            data["interfaces"][interface_name]["ipv4_config"].append(interface_ip_member)
 
             data["interfaces"][interface_name]["physical_interfaces"] = []
             data["interfaces"][interface_name]["physical_interfaces"].append(
@@ -1347,7 +1348,7 @@ def parse(logger, src_config):
             interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(3))
             interface_ip_member["type"] = "secondary"
 
-            data["interfaces"][interface_name]["ip_config"].append(interface_ip_member)
+            data["interfaces"][interface_name]["ipv4_config"].append(interface_ip_member)
 
         else:
 
@@ -1356,14 +1357,14 @@ def parse(logger, src_config):
             data["interfaces"][interface_name]["enabled"] = ""
             data["interfaces"][interface_name]["description"] = ""
 
-            data["interfaces"][interface_name]["ip_config"] = []
+            data["interfaces"][interface_name]["ipv4_config"] = []
 
             interface_ip_member = {}
             interface_ip_member["ip_address"] = re_match.group(2)
             interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(3))
             interface_ip_member["type"] = "primary"
 
-            data["interfaces"][interface_name]["ip_config"].append(interface_ip_member)
+            data["interfaces"][interface_name]["ipv4_config"].append(interface_ip_member)
 
             data["interfaces"][interface_name]["physical_interfaces"] = []
 

@@ -49,12 +49,12 @@ def interface_lookup(ip_address, interfaces):
 
     for interface, attributes in interfaces.items():
 
-        if attributes["ip_config"]:
+        if attributes["ipv4_config"]:
 
-            for ip_config in attributes["ip_config"]:
+            for ipv4_config in attributes["ipv4_config"]:
 
                 interface_networks[interface] = ipaddress.IPv4Interface(
-                    ip_config["ip_address"] + "/" + ip_config["mask"]
+                    ipv4_config["ip_address"] + "/" + ipv4_config["mask"]
                 )
 
     ## check if ip address matches any interface networks
