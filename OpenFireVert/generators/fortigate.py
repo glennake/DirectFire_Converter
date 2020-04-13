@@ -49,9 +49,52 @@ def generate(logger, parsed_data):
 
     logger.log(2, __name__ + ": generate interfaces")
 
-    """
-    Generate interfaces
-    """
+    dst_config.append("config system interface")
+
+    for interface, attributes in parsed_data["interfaces"].items():
+
+        if attributes["type"] == "interface":
+
+            dst_config.append("  edit " + interface)
+            dst_config.append("    set vdom root")
+
+            if attributes["ipv4_config"]:
+
+                dst_config.append("    set mode static")
+
+                for ipv4 in attributes["ipv4_config"]:
+
+                    if ipv4["type"] == "primary":
+
+                        dst_config.append(
+                            "    set ip " + ipv4["ip_address"] + " " + ipv4["mask"]
+                        )
+
+                if len(attributes["ipv4_config"]) > 1:
+
+                    dst_config.append("    set secondary-IP enable")
+                    dst_config.append("    config secondaryip")
+
+                    for ipv4 in attributes["ipv4_config"]:
+
+                        if ipv4["type"] == "secondary":
+
+                            dst_config.append("        edit 0")
+                            dst_config.append(
+                                "            set ip "
+                                + ipv4["ip_address"]
+                                + " "
+                                + ipv4["mask"]
+                            )
+                            dst_config.append("        next")
+
+                    dst_config.append("    end")
+
+            dst_config.append("  next")
+
+        ### need to add support for sub interfaces and switch interfaces
+
+    dst_config.append("end")
 
     # Generate zones
 
