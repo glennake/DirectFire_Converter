@@ -351,6 +351,10 @@
                                 <ip>1.1.1.3</ip>
                                 <netmask>255.255.255.248</netmask>
                             </secondary-ip>
+                            <secondary-ip>
+                                <ip>1.1.1.4</ip>
+                                <netmask>255.255.255.248</netmask>
+                            </secondary-ip>
                         </secondary-ip-list>
                         <anti-spoof>1</anti-spoof>
                         <anti-scan>1</anti-scan>
