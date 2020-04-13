@@ -37,19 +37,23 @@ def generate(logger, parsed_data):
 
     logger.log(2, __name__ + ": generate system")
 
+    dst_config.append("config system global")
+
     if "hostname" in parsed_data["system"]:
-        dst_config.append("config system global")
         dst_config.append(cfglvl1 + "set hostname " + parsed_data["system"]["hostname"])
-        dst_config.append("end")
     else:
         logger.log(3, __name__ + ": hostname not found in parsed data")
 
+    dst_config.append("end")
+
+    dst_config.append("config system dns")
+
     if "domain" in parsed_data["system"]:
-        dst_config.append("config system dns")
         dst_config.append(cfglvl1 + "set domain " + parsed_data["system"]["domain"])
-        dst_config.append("end")
     else:
         logger.log(3, __name__ + ": domain name not found in parsed data")
+
+    dst_config.append("end")
 
     # Generate interfaces
 

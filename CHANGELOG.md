@@ -81,3 +81,5 @@ All notable changes to this project will be documented in this file.
 
 - Moved data output method to a generator module
 - Changed data output method to JSON formatting
+
+## [0.6.0] - 2020-04-13

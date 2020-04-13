@@ -216,19 +216,19 @@ def generate(logger, parsed_data):
                     rule_command + " object-group " + attributes["dst_service"]
                 )
 
-        if attributes["src_address"] == "any":
+        if attributes["src_addresses"] == "any":
             rule_command = rule_command + " any"
         elif attributes["src_address_type"] == "name":
-            rule_command = rule_command + " object " + attributes["src_address"]
+            rule_command = rule_command + " object " + attributes["src_addresses"]
         elif attributes["src_address_type"] == "group":
-            rule_command = rule_command + " object-group " + attributes["src_address"]
+            rule_command = rule_command + " object-group " + attributes["src_addresses"]
 
-        if attributes["dst_address"] == "any":
+        if attributes["dst_addresses"] == "any":
             rule_command = rule_command + " any"
         elif attributes["dst_address_type"] == "name":
-            rule_command = rule_command + " object " + attributes["dst_address"]
+            rule_command = rule_command + " object " + attributes["dst_addresses"]
         elif attributes["dst_address_type"] == "group":
-            rule_command = rule_command + " object-group " + attributes["dst_address"]
+            rule_command = rule_command + " object-group " + attributes["dst_addresses"]
 
         if attributes["logging"] == True:
             rule_command = rule_command + " log"

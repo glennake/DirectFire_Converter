@@ -549,24 +549,24 @@ def parse(logger, src_config):
 
             data["policies"][policy_id] = {}
 
-            data["policies"][policy_id]["id"] = policy_id
-            data["policies"][policy_id]["type"] = "policy"
-            data["policies"][policy_id]["policy_set"] = match.group(1)
-            data["policies"][policy_id]["src_interface"] = ""
-            data["policies"][policy_id]["dst_interface"] = ""
-            data["policies"][policy_id]["protocol"] = match.group(4)
-            data["policies"][policy_id]["src_address"] = ""
-            data["policies"][policy_id]["src_address_type"] = ""
-            data["policies"][policy_id]["dst_address"] = ""
-            data["policies"][policy_id]["dst_address_type"] = ""
-            data["policies"][policy_id]["src_service"] = ""
-            data["policies"][policy_id]["src_service_type"] = ""
-            data["policies"][policy_id]["dst_service"] = ""
-            data["policies"][policy_id]["dst_service_type"] = ""
             data["policies"][policy_id]["action"] = ""
+            data["policies"][policy_id]["description"] = ""
+            data["policies"][policy_id]["dst_addresses"] = []
+            data["policies"][policy_id]["dst_interfaces"] = []
+            data["policies"][policy_id]["dst_services"] = []
             data["policies"][policy_id]["enabled"] = True
             data["policies"][policy_id]["logging"] = False
-            data["policies"][policy_id]["comment"] = ""
+            data["policies"][policy_id]["name"] = ""
+            data["policies"][policy_id]["nat"] = ""
+            data["policies"][policy_id]["policy_set"] = match.group(1)
+            data["policies"][policy_id]["protocol"] = match.group(4)
+            data["policies"][policy_id]["schedule"] = ""
+            data["policies"][policy_id]["src_addresses"] = []
+            data["policies"][policy_id]["src_interfaces"] = []
+            data["policies"][policy_id]["src_services"] = []
+            data["policies"][policy_id]["type"] = "policy"
+            data["policies"][policy_id]["users_excluded"] = []
+            data["policies"][policy_id]["users_included"] = []
 
             if match.group(3) == "permit":
                 data["policies"][policy_id]["action"] = "allow"
@@ -603,32 +603,48 @@ def parse(logger, src_config):
 
             if policy_src_any:
 
-                data["policies"][policy_id]["src_address"] = "any"
-                data["policies"][policy_id]["src_address_type"] = "any"
+                src_address = {}
+                src_address["name"] = "any"
+                src_address["type"] = "any"
+
+                data["policies"][policy_id]["src_addresses"].append(src_address)
+
                 policy_src = policy_src_any
 
             # Check if groups and parse vars
 
             if policy_src_group:
 
-                data["policies"][policy_id]["src_address"] = policy_src_group.group(1)
-                data["policies"][policy_id]["src_address_type"] = "group"
+                src_address = {}
+                src_address["name"] = policy_src_group.group(1)
+                src_address["type"] = "group"
+
+                data["policies"][policy_id]["src_addresses"].append(src_address)
+
                 policy_src = policy_src_group
 
             # Check if network object and parse vars
 
             if policy_src_addr:
 
-                data["policies"][policy_id]["src_address"] = policy_src_addr.group(1)
-                data["policies"][policy_id]["src_address_type"] = "host"
+                src_address = {}
+                src_address["name"] = policy_src_addr.group(1)
+                src_address["type"] = "host"
+
+                data["policies"][policy_id]["src_addresses"].append(src_address)
+
                 policy_src = policy_src_addr
 
             # Check if host and parse vars
 
             if policy_src_host:
 
-                data["policies"][policy_id]["src_address"] = policy_src_host.group(1)
-                data["policies"][policy_id]["src_address_type"] = "host"
+                src_address = {}
+                src_address["name"] = policy_src_host.group(1)
+                src_address["type"] = "host"
+
+                data["policies"][policy_id]["src_addresses"].append(src_address)
+
                 policy_src = policy_src_host
 
             # Check if directly specified and parse vars
@@ -637,47 +653,61 @@ def parse(logger, src_config):
 
             if policy_src_manual:
 
-                data["policies"][policy_id]["src_address"] = policy_src_manual.group(
-                    1
-                ).replace(" ", "/")
-                data["policies"][policy_id]["src_address_type"] = "manual"
+                src_address = {}
+                src_address["name"] = policy_src_manual.group(1).replace(" ", "/")
+                src_address["type"] = "manual"
+
+                ### need to parse manual address entry, create network object then add that to src_addresses
+
+                data["policies"][policy_id]["src_addresses"].append(src_address)
+
                 policy_src = policy_src_manual
 
             # If we have a source address then look for source service
 
-            if data["policies"][policy_id]["src_address"]:
+            if data["policies"][policy_id]["src_addresses"]:
 
                 if policy_src[2]:
 
                     if policy_src[2] == "object-group":
 
-                        data["policies"][policy_id]["src_service"] = policy_src[3]
-                        data["policies"][policy_id]["src_service_type"] = "group"
+                        src_service = {}
+                        src_service["name"] = resolve_default_service(policy_src[3])
+                        src_service["type"] = "group"
+
+                        data["policies"][policy_id]["src_services"].append(src_service)
 
                     elif policy_src[2] == "range":
 
-                        ### Should probably create and reference a service object here
+                        ### need to create and reference a service object
 
-                        data["policies"][policy_id]["src_service"] = (
+                        src_service = {}
+                        src_service["name"] = (
                             resolve_default_service(policy_src[3])
                             + "-"
                             + resolve_default_service(policy_src[4])
                         )
-                        data["policies"][policy_id]["src_service_type"] = "range"
+                        src_service["type"] = "range"
+
+                        data["policies"][policy_id]["src_services"].append(src_service)
 
                     elif policy_src[2] == "eq":
 
-                        data["policies"][policy_id][
-                            "src_service"
-                        ] = resolve_default_service(policy_src[3])
-                        data["policies"][policy_id]["src_service_type"] = "service"
+                        src_service = {}
+                        src_service["name"] = resolve_default_service(policy_src[3])
+                        src_service["type"] = "service"
 
-                    ### Need to add support for other operators here - gt, lt, neq
+                        data["policies"][policy_id]["src_services"].append(src_service)
+
+                    ### Need to add support for other operators - gt, lt, neq
 
                 else:
 
-                    data["policies"][policy_id]["src_service"] = "any"
-                    data["policies"][policy_id]["src_service_type"] = "any"
+                    src_service = {}
+                    src_service["name"] = "any"
+                    src_service["type"] = "any"
+
+                    data["policies"][policy_id]["src_services"].append(src_service)
 
             # Get destination address(es) and port(s) if applicable
 
@@ -706,32 +736,48 @@ def parse(logger, src_config):
 
             if policy_dst_any:
 
-                data["policies"][policy_id]["dst_address"] = "any"
-                data["policies"][policy_id]["dst_address_type"] = "any"
+                dst_address = {}
+                dst_address["name"] = "any"
+                dst_address["type"] = "any"
+
+                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+
                 policy_dst = policy_dst_any
 
             # Check if group and parse vars
 
             if policy_dst_group:
 
-                data["policies"][policy_id]["dst_address"] = policy_dst_group.group(1)
-                data["policies"][policy_id]["dst_address_type"] = "group"
+                dst_address = {}
+                dst_address["name"] = policy_dst_group.group(1)
+                dst_address["type"] = "group"
+
+                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+
                 policy_dst = policy_dst_group
 
             # Check if network object and parse vars
 
             if policy_dst_addr:
 
-                data["policies"][policy_id]["dst_address"] = policy_dst_addr.group(1)
-                data["policies"][policy_id]["dst_address_type"] = "host"
+                dst_address = {}
+                dst_address["name"] = policy_dst_addr.group(1)
+                dst_address["type"] = "host"
+
+                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+
                 policy_dst = policy_dst_addr
 
             # Check if host and parse vars
 
             if policy_dst_host:
 
-                data["policies"][policy_id]["dst_address"] = policy_dst_host.group(1)
-                data["policies"][policy_id]["dst_address_type"] = "host"
+                dst_address = {}
+                dst_address["name"] = policy_dst_host.group(1)
+                dst_address["type"] = "host"
+
+                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+
                 policy_dst = policy_dst_host
 
             # Check if directly specified and parse vars
@@ -740,47 +786,61 @@ def parse(logger, src_config):
 
             if policy_dst_manual:
 
-                data["policies"][policy_id]["dst_address"] = policy_dst_manual.group(
-                    1
-                ).replace(" ", "/")
-                data["policies"][policy_id]["dst_address_type"] = "manual"
+                dst_address = {}
+                dst_address["name"] = policy_dst_manual.group(1).replace(" ", "/")
+                dst_address["type"] = "manual"
+
+                ### need to parse manual address entry, create network object then add that to src_addresses
+
+                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+
                 policy_dst = policy_dst_manual
 
             # If we have a destination address then look for destination service
 
-            if data["policies"][policy_id]["dst_address"]:
+            if data["policies"][policy_id]["dst_addresses"]:
 
                 if policy_dst[2]:
 
                     if policy_dst[2] == "object-group":
 
-                        data["policies"][policy_id]["dst_service"] = policy_dst[3]
-                        data["policies"][policy_id]["dst_service_type"] = "group"
+                        dst_service = {}
+                        dst_service["name"] = resolve_default_service(policy_dst[3])
+                        dst_service["type"] = "group"
 
-                    elif policy_dst[2] == "range":
+                        data["policies"][policy_id]["dst_services"].append(dst_service)
 
-                        ### Should probably create and reference a service object here
+                    elif policy_src[2] == "range":
 
-                        data["policies"][policy_id]["dst_service"] = (
+                        ### need to create and reference a service object
+
+                        dst_service = {}
+                        dst_service["name"] = (
                             resolve_default_service(policy_dst[3])
                             + "-"
                             + resolve_default_service(policy_dst[4])
                         )
-                        data["policies"][policy_id]["dst_service_type"] = "range"
+                        dst_service["type"] = "range"
+
+                        data["policies"][policy_id]["dst_services"].append(dst_service)
 
                     elif policy_dst[2] == "eq":
 
-                        data["policies"][policy_id][
-                            "dst_service"
-                        ] = resolve_default_service(policy_dst[3])
-                        data["policies"][policy_id]["dst_service_type"] = "service"
+                        dst_service = {}
+                        dst_service["name"] = resolve_default_service(policy_dst[3])
+                        dst_service["type"] = "service"
+
+                        data["policies"][policy_id]["dst_services"].append(dst_service)
 
                     ### Need to add support for other operators here - gt, lt, neq
 
                 else:
 
-                    data["policies"][policy_id]["dst_service"] = "any"
-                    data["policies"][policy_id]["dst_service_type"] = "any"
+                    dst_service = {}
+                    dst_service["name"] = "any"
+                    dst_service["type"] = "any"
+
+                    data["policies"][policy_id]["dst_services"].append(dst_service)
 
             # Check if logging enabled
 
