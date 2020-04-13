@@ -31,12 +31,6 @@ try:
 except:
     raise ImportError("Could not import module: colorama")
 
-try:
-    import pprint
-except:
-    raise ImportError("Could not import module: pprint")
-
-
 # Import common and settings
 
 import OpenFireVert.common as common
@@ -50,10 +44,6 @@ arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument("-c", "--config", help="/full/path/to/config", required=True)
 
 arg_parser.add_argument(
-    "-o", "--output", choices=["config", "data"], help="output mode", required=True,
-)
-
-arg_parser.add_argument(
     "-s",
     "--source",
     choices=["ciscoasa_pre83", "fortigate", "junipersrx", "watchguard"],
@@ -62,63 +52,37 @@ arg_parser.add_argument(
 )
 
 arg_parser.add_argument(
-    "-d", "--destination", choices=["ciscoasa", "fortigate"], help="destination format",
+    "-d",
+    "--destination",
+    choices=["ciscoasa", "data", "fortigate"],
+    help="destination format",
+    required=True,
 )
 
 args = arg_parser.parse_args()
 
 # Initiate logging
 
-if args.output == "data":
-    logger = logger(args.source, "data")
-else:
-    logger = logger(args.source, args.destination)
+logger = logger(args.source, args.destination)
 
 logger.log(2, "OpenFireVert.main: converter starting")
-logger.log(2, "OpenFireVert.main: output mode is " + args.output)
 logger.log(2, "OpenFireVert.main: source format is " + args.source)
-
-# Check arguments
-
-if args.output == "config":
-
-    if args.destination is None:
-
-        logger.log(
-            3,
-            "OpenFireVert.main: destination format is required when output mode is config",
-        )
-
-        print(
-            f"{Fore.RED}Error: destination format is required when output mode is config.{Style.RESET_ALL}"
-        )
-
-        exit()
-
-elif args.output == "data":
-
-    if args.destination:
-
-        logger.log(
-            2,
-            "OpenFireVert.main: destination format provided but not required when output mode is data",
-        )
 
 
 def parse(src_format, src_config):
 
     logger.log(2, "OpenFireVert.parse: loading parser module for " + src_format)
 
-    if src_format == "ciscoasa_pre83":
+    if src_format == "ciscoasa_pre83":  ## Cisco ASA pre 8.3
         from OpenFireVert.parsers.ciscoasa_pre83 import parse
 
-    elif src_format == "fortigate":
+    elif src_format == "fortigate":  ## Fortinet FortiGate
         from OpenFireVert.parsers.fortigate import parse
 
-    elif src_format == "junipersrx":
+    elif src_format == "junipersrx":  ## Juniper SRX (JunOS)
         from OpenFireVert.parsers.junipersrx import parse
 
-    elif src_format == "watchguard":
+    elif src_format == "watchguard":  ## WatchGuard
         from OpenFireVert.parsers.watchguard import parse
 
     else:
@@ -145,10 +109,13 @@ def generate(dst_format, parsed_data):
 
     logger.log(2, "OpenFireVert.generate: loading generator module for " + dst_format)
 
-    if dst_format == "ciscoasa":
+    if dst_format == "ciscoasa":  ## Cisco ASA post 8.3
         from OpenFireVert.generators.ciscoasa import generate
 
-    elif dst_format == "fortigate":
+    elif dst_format == "data":  ## JSON Data
+        from OpenFireVert.generators.data import generate
+
+    elif dst_format == "fortigate":  ## Fortinet FortiGate
         from OpenFireVert.generators.fortigate import generate
 
     else:
@@ -162,15 +129,11 @@ def generate(dst_format, parsed_data):
 
     logger.log(2, "OpenFireVert.generate: loaded generator module for " + dst_format)
 
-    logger.log(
-        2, "OpenFireVert.generate: starting generation of destination configuration"
-    )
+    logger.log(2, "OpenFireVert.generate: starting generation of destination output")
 
     dst_config = generate(logger, parsed_data)
 
-    logger.log(
-        2, "OpenFireVert.generate: completed generation of destination configuration"
-    )
+    logger.log(2, "OpenFireVert.generate: completed generation of destination output")
 
     return dst_config
 
@@ -210,23 +173,16 @@ def main(src_format, dst_format):
 
     # Output
 
-    if args.output == "data":  # pretty print parsed data
+    logger.log(2, "OpenFireVert.main: running configuration generator")
 
-        logger.log(2, "OpenFireVert.main: output parsed data as dictionary dump")
+    dst_config = generate(dst_format=dst_format, parsed_data=parsed_data)
 
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(parsed_data)
+    for line in dst_config:
+        print(line)
 
-    else:  # generate destination configuration
+    ### add support for output to file
 
-        logger.log(2, "OpenFireVert.main: running configuration generator")
-
-        dst_config = generate(dst_format=dst_format, parsed_data=parsed_data)
-
-        for line in dst_config:
-            print(line)
-
-        logger.log(2, "OpenFireVert.main: configuration generator finished")
+    logger.log(2, "OpenFireVert.main: configuration generator finished")
 
     logger.log(2, "OpenFireVert.main: converter exiting")
 

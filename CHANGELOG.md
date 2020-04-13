@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.1] - 2020-03-29
+## [0.1.0] - 2020-03-29
 
 ### Added
 
@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Initial support for parsing WatchGuard
 - Initial support for generating Fortinet FortiGate
 
-## [0.0.2] - 2020-03-31
+## [0.2.0] - 2020-03-31
 
 ### Added
 
@@ -18,19 +18,19 @@ All notable changes to this project will be documented in this file.
 - Module template for generators
 - Initial support for parsing Cisco ASA pre-8.3
 
-## [0.0.3] - 2020-04-01
+## [0.3.0] - 2020-04-01
 
 ### Added
 
 - Initial support for generating Cisco ASA post-8.3
 
-## [0.0.4] - 2020-04-06
+## [0.3.1] - 2020-04-06
 
 ### Changed
 
 - Standardised comments and logging to use common terminology
 
-## [0.0.5] - 2020-04-06
+## [0.3.2] - 2020-04-06
 
 ### Added
 
@@ -41,13 +41,13 @@ All notable changes to this project will be documented in this file.
 - Argument parser and logging to use named arguments
 - Documentation to provide new installation and usage details
 
-## [0.0.6] - 2020-04-06
+## [0.4.0] - 2020-04-06
 
 ### Added
 
 - Initial support for parsing Fortinet FortiGate
 
-## [0.0.7] - 2020-04-07
+## [0.5.0] - 2020-04-07
 
 ### Added
 
@@ -59,7 +59,7 @@ All notable changes to this project will be documented in this file.
 
 - Bug fixes in Fortinet FortiGate parser
 
-## [0.0.8] - 2020-04-09
+## [0.5.1] - 2020-04-09
 
 ### Added
 
@@ -69,3 +69,15 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Bug fixes in parsers - Cisco ASA (pre and post 8.3), Fortinet FortiGate, WatchGuard
+
+## [0.5.2] - 2020-04-12
+
+### Added
+
+- Support for parsing WatchGuard interfaces
+- Enhancements for parsing WatchGuard routes
+
+### Changed
+
+- Moved data output method to a generator module
+- Changed data output method to JSON formatting
