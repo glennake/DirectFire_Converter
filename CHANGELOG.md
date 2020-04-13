@@ -82,4 +82,13 @@ All notable changes to this project will be documented in this file.
 - Moved data output method to a generator module
 - Changed data output method to JSON formatting
 
-## [0.6.0] - 2020-04-13
+## [0.5.3] - 2020-04-13
+
+### Added
+
+- Support for parsing Fortinet FortiGate interfaces
+
+### Changed
+
+- Standardisation of Fortinet FortiGate parser indentation levels
+- Move firewall policy data structure to nested lists for addresses, interfaces and services
