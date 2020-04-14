@@ -3,6 +3,7 @@ domain-name domain.local
 names
 name 10.0.0.10 INSIDE1 description Inside Host 1
 name 10.0.0.11 INSIDE2 description Inside Host 2
+name 10.30.30.10 INSIDE3 description Inside Host 3
 name 8.8.8.8 GOOGLE_DNS1 description Google DNS 1
 name 8.8.4.4 GOOGLE_DNS2 description Google DNS 2
 !
@@ -21,6 +22,13 @@ interface Ethernet0/1
  nameif inside
  security-level 100
  ip address 10.0.0.1 255.255.255.0 
+!
+interface Ethernet0/1.10
+ description *** Inside VL 10 ***
+ nameif inside10
+ security-level 100
+ ip address 10.10.10.1 255.255.255.0 
+ vlan 10
 !
 interface Ethernet0/2
  shutdown
@@ -48,6 +56,9 @@ object-group network ALL_INTERNAL
  description All internal networks
  network-object INSIDE1 255.255.255.255
  network-object INSIDE2 255.255.255.255
+object-group network INTERNAL_1
+ description Subset of internal networks
+ network-object INSIDE1 255.255.255.255
 object-group service port5405 tcp-udp
  port-object eq 5405
 object-group protocol TCPUDP
@@ -67,9 +78,13 @@ object-group protocol DM_INLINE_PROTOCOL_7
  protocol-object ip
  protocol-object icmp
 access-list inside_nat0_outbound extended permit ip object-group ALL_INTERNAL any 
-access-list outside_access_in extended permit object-group port5405 GOOGLE_DNS1 255.255.255.255 INSIDE1 255.255.255.255
 access-list outside_access_in remark access inbound
+access-list outside_access_in extended permit object-group port5405 GOOGLE_DNS1 255.255.255.255 INSIDE1 255.255.255.255
 access-list inside_access_in extended permit ip host 10.0.0.12 any inactive 
+access-list inside_access_in extended permit ip 10.0.0.0 255.255.255.0 any log inactive
+access-list inside_access_in extended permit ip INSIDE1 255.255.255.255 any inactive 
+access-list inside_access_in remark Inside3 allow any
+access-list inside_access_in extended permit ip INSIDE3 255.255.255.255 any inactive 
 access-list inside_access_in remark allow host to any
 access-list inside_access_in extended permit ip any any 
 access-list IPS-INSPECT-ACL extended permit ip any any 
