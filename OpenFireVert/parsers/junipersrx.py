@@ -18,7 +18,7 @@ interface_lookup = common.interface_lookup
 ipv4_prefix_to_mask = common.ipv4_prefix_to_mask
 
 
-def parse(logger, src_config):
+def parse(logger, src_config, routing_info=""):
 
     logger.log(2, __name__ + ": parser module started")
 
@@ -1282,7 +1282,9 @@ def parse(logger, src_config):
             interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(4))
             interface_ip_member["type"] = "secondary"
 
-            data["interfaces"][interface_name]["ipv4_config"].append(interface_ip_member)
+            data["interfaces"][interface_name]["ipv4_config"].append(
+                interface_ip_member
+            )
 
         else:
 
@@ -1298,7 +1300,9 @@ def parse(logger, src_config):
             interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(4))
             interface_ip_member["type"] = "primary"
 
-            data["interfaces"][interface_name]["ipv4_config"].append(interface_ip_member)
+            data["interfaces"][interface_name]["ipv4_config"].append(
+                interface_ip_member
+            )
 
             data["interfaces"][interface_name]["physical_interfaces"] = []
             data["interfaces"][interface_name]["physical_interfaces"].append(
@@ -1348,7 +1352,9 @@ def parse(logger, src_config):
             interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(3))
             interface_ip_member["type"] = "secondary"
 
-            data["interfaces"][interface_name]["ipv4_config"].append(interface_ip_member)
+            data["interfaces"][interface_name]["ipv4_config"].append(
+                interface_ip_member
+            )
 
         else:
 
@@ -1364,7 +1370,9 @@ def parse(logger, src_config):
             interface_ip_member["mask"] = ipv4_prefix_to_mask(re_match.group(3))
             interface_ip_member["type"] = "primary"
 
-            data["interfaces"][interface_name]["ipv4_config"].append(interface_ip_member)
+            data["interfaces"][interface_name]["ipv4_config"].append(
+                interface_ip_member
+            )
 
             data["interfaces"][interface_name]["physical_interfaces"] = []
 
@@ -1497,7 +1505,7 @@ def parse(logger, src_config):
         data["routes"][route_id]["type"] = "static"
 
         data["routes"][route_id]["interface"] = interface_lookup(
-            route_gateway, data["interfaces"]
+            route_gateway, data["interfaces"], data["routes"]
         )
 
         route_id += 1

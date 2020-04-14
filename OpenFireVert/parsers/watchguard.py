@@ -16,7 +16,7 @@ cleanse_names = common.cleanse_names
 interface_lookup = common.interface_lookup
 
 
-def parse(logger, src_config):
+def parse(logger, src_config, routing_info=""):
 
     logger.log(2, __name__ + ": parser module started")
 
@@ -245,7 +245,7 @@ def parse(logger, src_config):
         data["routes"][routes_key]["mask"] = route.find("mask").text
         data["routes"][routes_key]["gateway"] = route_gateway
         data["routes"][routes_key]["interface"] = interface_lookup(
-            route_gateway, data["interfaces"]
+            route_gateway, data["interfaces"], data["routes"]
         )
         data["routes"][routes_key]["distance"] = route.find("metric").text
 

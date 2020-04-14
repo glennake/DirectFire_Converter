@@ -16,7 +16,7 @@ cleanse_names = common.cleanse_names
 common.common_regex()
 
 
-def parse(logger, src_config):
+def parse(logger, src_config, routing_info=""):
 
     logger.log(2, __name__ + ": parser module started")
 

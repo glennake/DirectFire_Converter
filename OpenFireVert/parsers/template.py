@@ -17,7 +17,7 @@ import OpenFireVert.settings as settings
 cleanse_names = common.cleanse_names
 
 
-def parse(logger, src_config):
+def parse(logger, src_config, routing_info=""):
 
     logger.log(2, __name__ + ": parser module started")
 

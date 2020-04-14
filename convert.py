@@ -59,6 +59,10 @@ arg_parser.add_argument(
     required=True,
 )
 
+arg_parser.add_argument(
+    "-r", "--routing", help="path to supplemental routing information csv file"
+)
+
 args = arg_parser.parse_args()
 
 # Initiate logging
@@ -69,7 +73,7 @@ logger.log(2, "OpenFireVert.main: converter starting")
 logger.log(2, "OpenFireVert.main: source format is " + args.source)
 
 
-def parse(src_format, src_config):
+def parse(src_format, src_config, routing_info=""):
 
     logger.log(2, "OpenFireVert.parse: loading parser module for " + src_format)
 
@@ -98,7 +102,7 @@ def parse(src_format, src_config):
 
     logger.log(2, "OpenFireVert.parse: starting parse of source configuration")
 
-    parsed_data = parse(logger, src_config)
+    parsed_data = parse(logger, src_config, routing_info)
 
     logger.log(2, "OpenFireVert.parse: completed parse of source configuration")
 
@@ -138,7 +142,7 @@ def generate(dst_format, parsed_data):
     return dst_config
 
 
-def main(src_format, dst_format):
+def main(src_format, dst_format, routing_info=""):
 
     # Load source configuration file
 
@@ -163,11 +167,34 @@ def main(src_format, dst_format):
 
         exit()
 
+    if routing_info:
+
+        try:
+
+            with open(args.routing) as routing_file:
+                routing_info = config_file.read()
+
+        except:
+
+            logger.log(
+                4,
+                "OpenFireVert.main: routing file either not found or not readable "
+                + args.config,
+            )
+
+            print(
+                f"{Fore.RED}Error: routing file either not found or not readable.{Style.RESET_ALL}"
+            )
+
+            exit()
+
     # Run configuration parser
 
     logger.log(2, "OpenFireVert.main: running configuration parser")
 
-    parsed_data = parse(src_format=src_format, src_config=src_config)
+    parsed_data = parse(
+        src_format=src_format, src_config=src_config, routing_info=routing_info
+    )
 
     logger.log(2, "OpenFireVert.main: configuration parser finished")
 
@@ -189,4 +216,4 @@ def main(src_format, dst_format):
 
 if __name__ == "__main__":
 
-    main(src_format=args.source, dst_format=args.destination)
+    main(src_format=args.source, dst_format=args.destination, routing_info=args.routing)

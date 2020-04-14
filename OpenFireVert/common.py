@@ -35,13 +35,17 @@ def common_regex():
     common_regex.mac_address = "(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})"
 
 
-def interface_lookup(ip_address, interfaces):
+def interface_lookup(ip_address, interfaces, routes):
 
     ip_address = ipaddress.ip_address(ip_address)
 
     interface_networks = {}
     matching_interfaces = {}
     selected_interface = ""
+
+    route_networks = {}
+    matching_routes = {}
+    selected_route = ""
 
     # lookup interface subnets
 
@@ -90,9 +94,66 @@ def interface_lookup(ip_address, interfaces):
 
         selected_interface = ""
 
-    ## return interface name from the lookup
+    ## return if an interface selected
 
-    return selected_interface
+    if selected_interface:
+        return selected_interface
+
+    # lookup routes if no interface found
+
+    ## build dictionary of all routes
+
+    for id, route in enumerate(routes):
+
+        route_networks[id] = ipaddress.IPv4Network(
+            route["network"] + "/" + route["mask"]
+        )
+
+    ## check if ip address matches any routes
+
+    for id, route in route_networks.items():
+
+        if ip_address in route:
+
+            matching_routes[id] = route
+
+    ## if multiple matching routes find the most specific
+
+    if len(matching_routes) == 1:
+
+        selected_route = list(matching_routes)[0]
+
+    elif len(matching_routes) > 1:
+
+        for id, route in matching_routes.items():
+
+            if selected_route:
+
+                if route.netmask > selected_route_network.netmask:
+
+                    selected_route = id
+                    selected_route_network = route
+            else:
+
+                selected_route = id
+                selected_route_network = route
+
+    else:
+
+        selected_route = ""
+
+    if selected_route:
+        selected_interface = routes[selected_route]["interface"]
+
+    ## return if an interface selected
+
+    if selected_interface:
+        return selected_interface
+
+    else:
+        return ""
+
+    ### need to add lookup against supplemental routing info csv
 
 
 def ipv4_prefix_to_mask(prefix):
