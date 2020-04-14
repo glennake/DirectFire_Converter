@@ -13,9 +13,11 @@ import OpenFireVert.settings as settings
 # Initialise common functions
 
 cleanse_names = common.cleanse_names
+common.common_regex()
+interface_lookup = common.interface_lookup
 
 
-def parse(logger, src_config):
+def parse(logger, src_config, routing_info=""):
 
     logger.log(2, __name__ + ": parser module started")
 
@@ -34,8 +36,8 @@ def parse(logger, src_config):
     data["interfaces"] = {}
     data["zones"] = {}
 
-    data["routes"] = {}
-    data["routes6"] = {}
+    data["routes"] = []
+    data["routes6"] = []
 
     data["network_objects"] = {}
     data["network6_objects"] = {}
@@ -45,16 +47,61 @@ def parse(logger, src_config):
     data["service_objects"] = {}
     data["service_groups"] = {}
 
-    data["policies"] = {}
+    data["policies"] = []
 
-    data["nat"] = {}
+    data["nat"] = []
 
     route_id = 1
     route6_id = 1
     policy_id = 1
     nat_id = 1
 
+    ## add default network objects
+
+    data["network_objects"]["any"] = {}
+    data["network_objects"]["any"]["type"] = "any"
+
+    data["network_objects"]["any4"] = {}
+    data["network_objects"]["any4"]["type"] = "any"
+
+    ## define default protocols
+
+    default_protocol_list = [
+        "ah",
+        "eigrp",
+        "esp",
+        "gre",
+        "icmp",
+        "icmp6",
+        "igmp",
+        "igrp",
+        "ip",
+        "ipinip",
+        "ipsec",
+        "nos",
+        "ospf",
+        "pcp",
+        "pim",
+        "pptp",
+        "snp",
+        "tcp",
+        "udp",
+    ]
+
     # Function to resolve default services from name to port number
+
+    def lookup_name(name):
+
+        name_object = re.search(
+            "name ("
+            + common.common_regex.ipv4_address
+            + ") "
+            + name
+            + "(?: description (.*))?",
+            src_config,
+        )
+
+        return name_object
 
     def resolve_default_service(service):
 
@@ -225,11 +272,81 @@ def parse(logger, src_config):
 
     # Parse interfaces
 
-    logger.log(2, __name__ + ": parse interfaces - not yet supported")
+    logger.log(2, __name__ + ": parse interfaces")
 
-    """
-    Parse interfaces
-    """
+    for re_match in re.finditer("interface (.*)\n(?: .*\n){1,}!", src_config,):
+
+        ## split interface config and parse nameif
+
+        interface_config = str(re_match.group(0)).split("\n")
+
+        for line in interface_config:
+
+            ## find nameif
+
+            if " nameif" in line and " no nameif" not in line:
+                interface_name = line[8:]
+
+        ## create interface object
+
+        interface_phys_name = re_match.group(1)
+
+        if "." in interface_phys_name:  ## sub interface
+
+            sub_interface = interface_phys_name.split(".")
+
+            data["interfaces"][interface_name] = {}
+            data["interfaces"][interface_name]["physical_interfaces"] = []
+            data["interfaces"][interface_name]["type"] = "subinterface"
+            data["interfaces"][interface_name]["vlan_id"] = sub_interface[1]
+            data["interfaces"][interface_name]["vlan_name"] = ""
+
+            data["interfaces"][interface_name]["physical_interfaces"].append(
+                sub_interface[0]
+            )
+
+        else:  ## physical interface
+
+            data["interfaces"][interface_name] = {}
+            data["interfaces"][interface_name]["physical_interfaces"] = []
+            data["interfaces"][interface_name]["type"] = "interface"
+            data["interfaces"][interface_name]["vlan_id"] = ""
+            data["interfaces"][interface_name]["vlan_name"] = ""
+
+            data["interfaces"][interface_name]["physical_interfaces"].append(
+                interface_phys_name
+            )
+
+        data["interfaces"][interface_name]["description"] = ""
+        data["interfaces"][interface_name]["enabled"] = True
+        data["interfaces"][interface_name]["ipv4_config"] = []
+        data["interfaces"][interface_name]["ipv6_config"] = []
+
+        ## parse interface config
+
+        for line in interface_config:
+
+            ## find description
+
+            if " description" in line:
+                data["interfaces"][interface_name]["description"] = line[13:]
+
+            ## find shutdown
+
+            if " shutdown" in line:
+                data["interfaces"][interface_name]["enabled"] = False
+
+            ## find ip config
+
+            if " ip address" in line and " no ip address" not in line:
+
+                ip_address_line = line.split(" ")
+
+                ip_config = {}
+                ip_config["ip_address"] = ip_address_line[3]
+                ip_config["mask"] = ip_address_line[4]
+
+                data["interfaces"][interface_name]["ipv4_config"].append(ip_config)
 
     # Parse zones
 
@@ -243,105 +360,266 @@ def parse(logger, src_config):
 
     logger.log(2, __name__ + ": parse static routes")
 
-    """
-    Parse static routes
-    """
+    for re_match in re.finditer("^route .*$", src_config, re.MULTILINE):
+
+        ## split route config
+
+        route_config = str(re_match.group(0)).split(" ")
+
+        route = {}
+
+        route["description"] = ""
+        route["distance"] = route_config[5]
+        route["gateway"] = route_config[4]
+        route["interface"] = route_config[1]
+        route["mask"] = route_config[3]
+        route["network"] = ""
+        route["source"] = ""
+        route["type"] = "static"
+
+        ## check if network is a name object
+
+        name_object = lookup_name(route_config[2])
+
+        if name_object:
+            route["network"] = name_object.group(1)
+
+        else:
+            route["network"] = route_config[2]
+
+        ## add to routes
+
+        data["routes"].append(route)
 
     # Parse IPv4 network objects
 
-    logger.log(2, __name__ + ": parse IPv4 network objects")
+    # logger.log(2, __name__ + ": parse IPv4 network objects")
 
-    for match in re.finditer(
-        r"name ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}) (\S{1,})(?: description (.{1,}))?",
-        src_config,
-    ):
+    # for re_match in re.finditer(
+    #     r"name ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}) (\S{1,})(?: description (.{1,}))?",
+    #     src_config,
+    # ):
 
-        data["network_objects"][match.group(2)] = {}
-        data["network_objects"][match.group(2)]["type"] = "host"
-        data["network_objects"][match.group(2)]["host"] = match.group(1)
-        data["network_objects"][match.group(2)]["description"] = match.group(3)
+    #     data["network_objects"][re_match.group(2)] = {}
+    #     data["network_objects"][re_match.group(2)]["type"] = "host"
+    #     data["network_objects"][re_match.group(2)]["host"] = re_match.group(1)
+    #     data["network_objects"][re_match.group(2)]["description"] = re_match.group(3)
 
-    # If address object is a network, change its type and seperate address / mask
+    # # If address object is a network, change its type and seperate address / mask
 
-    for address, attributes in data["network_objects"].items():
+    # for address, attributes in data["network_objects"].items():
 
-        for match in re.finditer(
-            r"network-object "
-            + address
-            + " ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})",
-            src_config,
-        ):
+    #     for re_match in re.finditer(
+    #         r"network-object "
+    #         + address
+    #         + " ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})",
+    #         src_config,
+    #     ):
 
-            data["network_objects"][address]["type"] = "network"
-            data["network_objects"][address]["network"] = attributes["host"]
-            data["network_objects"][address]["mask"] = match.group(1)
-
-    # Parse IPv6 network objects
-
-    logger.log(2, __name__ + ": parse IPv6 network objects")
-
-    """
-    Parse IPv6 network objects
-    """
+    #         data["network_objects"][address]["type"] = "network"
+    #         data["network_objects"][address]["network"] = attributes["host"]
+    #         data["network_objects"][address]["mask"] = re_match.group(1)
 
     # Parse network groups
 
     logger.log(2, __name__ + ": parse network groups")
 
-    for match in re.finditer(
-        r"object-group network ([\S]*)[\s](?: description .*[\s])?(?: (?:network-object (?:host .*|.* [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})[\s])){1,}",
-        src_config,
-    ):
+    for re_match in re.finditer("object-group network (.*)\n(?: .*\n){1,}", src_config):
 
-        data["network_groups"][match.group(1)] = {}
-        data["network_groups"][match.group(1)]["type"] = "group"
-        data["network_groups"][match.group(1)]["description"] = ""
-        data["network_groups"][match.group(1)]["members"] = []
+        network_groups = str(re_match.group(0)).split("\n")
 
-        network_grp_desc = re.search(r" description (.*)", match.group(0))
+        network_group_name = network_groups[0][21:]
 
-        if network_grp_desc:
-            data["network_groups"][match.group(1)][
-                "description"
-            ] = network_grp_desc.group(1)
+        data["network_groups"][network_group_name] = {}
+        data["network_groups"][network_group_name]["description"] = ""
+        data["network_groups"][network_group_name]["members"] = []
 
-        for match2 in re.finditer(
-            r"(?:network-object (?:host (.*)|(.*) [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})){1,}",
-            match.group(0),
-        ):
+        ## check for description and set start index
 
-            if match2.group(1):
+        if " description" in network_groups[1]:
+            data["network_groups"][network_group_name]["description"] = network_groups[
+                1
+            ][13:]
+            i = 2
 
-                data["network_groups"][match.group(1)]["members"].append(
-                    match2.group(1)
+        else:
+            i = 1
+
+        ## loop through network group entries
+
+        for member in network_groups[i:]:
+
+            if " network-object host" in member:  ## if host member
+
+                network_object = member[21:]
+
+                name_object = lookup_name(network_object)
+
+                if name_object:  ## check for associated name object
+
+                    data["network_objects"][network_object] = {}
+                    data["network_objects"][network_object]["type"] = "host"
+                    data["network_objects"][network_object]["host"] = name_object.group(
+                        1
+                    )
+
+                    if name_object.group(2):
+                        data["network_objects"][network_object][
+                            "description"
+                        ] = name_object.group(2)
+
+                    else:
+                        data["network_objects"][network_object]["description"] = ""
+
+                else:  ## else is a directly defined host
+
+                    data["network_objects"][network_object] = {}
+                    data["network_objects"][network_object]["type"] = "host"
+                    data["network_objects"][network_object]["host"] = network_object
+                    data["network_objects"][network_object]["description"] = ""
+
+                ## add network object to the group
+
+                data["network_groups"][network_group_name]["members"].append(
+                    network_object
                 )
 
-            if match2.group(2):
+            elif " network-object" in member:  ## if network member
 
-                data["network_groups"][match.group(1)]["members"].append(
-                    match2.group(2)
+                network_config = str(member[16:]).split(" ")
+
+                name_object = lookup_name(network_config[0])
+
+                if network_config[1] == "255.255.255.255":  # is a host
+
+                    network_object = network_config[0]
+
+                    if name_object:  ## check for associated name object
+
+                        data["network_objects"][network_object] = {}
+                        data["network_objects"][network_object]["type"] = "host"
+                        data["network_objects"][network_object][
+                            "host"
+                        ] = name_object.group(1)
+
+                        if name_object.group(2):
+                            data["network_objects"][network_object][
+                                "description"
+                            ] = name_object.group(2)
+
+                        else:
+                            data["network_objects"][network_object]["description"] = ""
+
+                    else:  ## else is a directly defined host
+
+                        data["network_objects"][network_object] = {}
+                        data["network_objects"][network_object]["type"] = "host"
+                        data["network_objects"][network_object]["host"] = network_object
+                        data["network_objects"][network_object]["description"] = ""
+
+                else:  ## is a network
+
+                    network_object = network_config[0] + "_" + network_config[1]
+
+                    if name_object:  ## check for associated name object
+
+                        data["network_objects"][network_object] = {}
+                        data["network_objects"][network_object]["type"] = "network"
+                        data["network_objects"][network_object][
+                            "network"
+                        ] = name_object.group(1)
+                        data["network_objects"][network_object][
+                            "mask"
+                        ] = network_config[1]
+
+                        if name_object.group(2):
+                            data["network_objects"][network_object][
+                                "description"
+                            ] = name_object.group(2)
+
+                        else:
+                            data["network_objects"][network_object]["description"] = ""
+
+                    else:  ## else is a directly defined network
+
+                        data["network_objects"][network_object] = {}
+                        data["network_objects"][network_object]["type"] = "network"
+                        data["network_objects"][network_object][
+                            "network"
+                        ] = network_config[0]
+                        data["network_objects"][network_object][
+                            "mask"
+                        ] = network_config[1]
+                        data["network_objects"][network_object]["description"] = ""
+
+                ## add network object to the group
+
+                data["network_groups"][network_group_name]["members"].append(
+                    network_object
                 )
+
+            elif " group-object" in member:  ## if group member
+
+                network_group = member[14:]
+
+                data["network_groups"][network_group_name]["members"].append(
+                    network_group
+                )
+
+    # for re_match in re.finditer(
+    #     r"object-group network ([\S]*)[\s](?: description .*[\s])?(?: (?:network-object (?:host .*|.* [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})[\s])){1,}",
+    #     src_config,
+    # ):
+
+    #     data["network_groups"][re_match.group(1)] = {}
+    #     data["network_groups"][re_match.group(1)]["type"] = "group"
+    #     data["network_groups"][re_match.group(1)]["description"] = ""
+    #     data["network_groups"][re_match.group(1)]["members"] = []
+
+    #     network_grp_desc = re.search(r" description (.*)", re_match.group(0))
+
+    #     if network_grp_desc:
+    #         data["network_groups"][re_match.group(1)][
+    #             "description"
+    #         ] = network_grp_desc.group(1)
+
+    #     for re_match2 in re.finditer(
+    #         r"(?:network-object (?:host (.*)|(.*) [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})){1,}",
+    #         re_match.group(0),
+    #     ):
+
+    #         if re_match2.group(1):
+
+    #             data["network_groups"][re_match.group(1)]["members"].append(
+    #                 re_match2.group(1)
+    #             )
+
+    #         if re_match2.group(2):
+
+    #             data["network_groups"][re_match.group(1)]["members"].append(
+    #                 re_match2.group(2)
+    #             )
 
     # Parse service groups
 
     logger.log(2, __name__ + ": parse service groups")
 
-    for match in re.finditer(
+    for re_match in re.finditer(
         r"object-group service ([\S]*)(?: ([\S]*))?[\s](?: description .*[\s])?(?: port-object (eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?(?:[\s])?| service-object ([\S]*)(?: )?(?:[\s])?(?:(eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?(?:[\s])?)?){1,}",
         src_config,
     ):
 
-        data["service_groups"][match.group(1)] = {}
-        data["service_groups"][match.group(1)]["type"] = "group"
-        data["service_groups"][match.group(1)]["protocol"] = match.group(2)
-        data["service_groups"][match.group(1)]["description"] = ""
-        data["service_groups"][match.group(1)]["members"] = []
+        data["service_groups"][re_match.group(1)] = {}
+        data["service_groups"][re_match.group(1)]["type"] = "group"
+        data["service_groups"][re_match.group(1)]["protocol"] = re_match.group(2)
+        data["service_groups"][re_match.group(1)]["description"] = ""
+        data["service_groups"][re_match.group(1)]["members"] = []
 
-        service_grp_desc = re.search(r" description (.*)", match.group(0))
+        service_grp_desc = re.search(r" description (.*)", re_match.group(0))
 
         if service_grp_desc:
 
-            data["service_groups"][match.group(1)][
+            data["service_groups"][re_match.group(1)][
                 "description"
             ] = service_grp_desc.group(1)
 
@@ -349,26 +627,27 @@ def parse(logger, src_config):
 
         # Parse port objects in service group
 
-        for match2 in re.finditer(
-            r"(?:port-object (eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?)", match.group(0)
+        for re_match2 in re.finditer(
+            r"(?:port-object (eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?)",
+            re_match.group(0),
         ):
 
-            if match2.group(1) == "range":
+            if re_match2.group(1) == "range":
 
-                service_port_first = resolve_default_service(match2.group(2))
-                service_port_last = resolve_default_service(match2.group(3))
+                service_port_first = resolve_default_service(re_match2.group(2))
+                service_port_last = resolve_default_service(re_match2.group(3))
 
                 service_name = service_port_first + "-" + service_port_last
 
             else:
 
-                service_port = resolve_default_service(match2.group(2))
+                service_port = resolve_default_service(re_match2.group(2))
 
                 service_name = service_port
 
             # Break tcp-udp service entries to seperate TCP and UDP service objects
 
-            if match.group(2) == "tcp-udp":
+            if re_match.group(2) == "tcp-udp":
 
                 # Create a TCP service object and add to service group
 
@@ -376,7 +655,7 @@ def parse(logger, src_config):
 
                 data["service_objects"]["tcp_" + service_name]["protocol"] = "6"
 
-                if match2.group(1) == "range":
+                if re_match2.group(1) == "range":
 
                     data["service_objects"]["tcp_" + service_name]["type"] = "range"
                     data["service_objects"]["tcp_" + service_name][
@@ -393,7 +672,7 @@ def parse(logger, src_config):
                         "destination_port"
                     ] = service_port
 
-                data["service_groups"][match.group(1)]["members"].append(
+                data["service_groups"][re_match.group(1)]["members"].append(
                     "tcp_" + service_name
                 )
 
@@ -403,7 +682,7 @@ def parse(logger, src_config):
 
                 data["service_objects"]["udp_" + service_name]["protocol"] = "17"
 
-                if match2.group(1) == "range":
+                if re_match2.group(1) == "range":
 
                     data["service_objects"]["udp_" + service_name]["type"] = "range"
                     data["service_objects"]["udp_" + service_name][
@@ -420,7 +699,7 @@ def parse(logger, src_config):
                         "destination_port"
                     ] = service_port
 
-                data["service_groups"][match.group(1)]["members"].append(
+                data["service_groups"][re_match.group(1)]["members"].append(
                     "udp_" + service_name
                 )
 
@@ -428,13 +707,13 @@ def parse(logger, src_config):
 
             else:
 
-                service_name = match.group(2) + "_" + service_name
+                service_name = re_match.group(2) + "_" + service_name
 
                 data["service_objects"][service_name] = {}
 
-                data["service_objects"][service_name]["protocol"] = match.group(2)
+                data["service_objects"][service_name]["protocol"] = re_match.group(2)
 
-                if match2.group(1) == "range":
+                if re_match2.group(1) == "range":
 
                     data["service_objects"][service_name]["type"] = "range"
                     data["service_objects"][service_name][
@@ -451,24 +730,26 @@ def parse(logger, src_config):
                         "destination_port"
                     ] = service_port
 
-                data["service_groups"][match.group(1)]["members"].append(service_name)
+                data["service_groups"][re_match.group(1)]["members"].append(
+                    service_name
+                )
 
         # Parse service objects in service group
 
-        for match2 in re.finditer(
+        for re_match2 in re.finditer(
             r"service-object ([\S]*)(?:[\s])?(?:(eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?)?",
-            match.group(0),
+            re_match.group(0),
         ):
 
-            if match2.group(2):
+            if re_match2.group(2):
 
-                if match2.group(1) == "range":
+                if re_match2.group(1) == "range":
 
-                    service_port_first = resolve_default_service(match2.group(3))
-                    service_port_last = resolve_default_service(match2.group(4))
+                    service_port_first = resolve_default_service(re_match2.group(3))
+                    service_port_last = resolve_default_service(re_match2.group(4))
 
                     service_name = (
-                        match2.group(1)
+                        re_match2.group(1)
                         + "_"
                         + service_port_first
                         + "-"
@@ -477,23 +758,23 @@ def parse(logger, src_config):
 
                 else:
 
-                    service_port = resolve_default_service(match2.group(3))
+                    service_port = resolve_default_service(re_match2.group(3))
 
-                    service_name = match2.group(1) + "_" + service_port
+                    service_name = re_match2.group(1) + "_" + service_port
 
             else:
 
-                service_name = match2.group(1) + "_all"
+                service_name = re_match2.group(1) + "_all"
 
             ### Need to add the ability to parse ICMP services with type and code values in here
 
-            if match2.group(2):
+            if re_match2.group(2):
 
                 data["service_objects"][service_name] = {}
 
-                data["service_objects"][service_name]["protocol"] = match2.group(1)
+                data["service_objects"][service_name]["protocol"] = re_match2.group(1)
 
-                if match2.group(2) == "range":
+                if re_match2.group(2) == "range":
 
                     data["service_objects"][service_name]["type"] = "range"
                     data["service_objects"][service_name][
@@ -514,14 +795,14 @@ def parse(logger, src_config):
 
                 data["service_objects"][service_name] = {}
                 data["service_objects"][service_name]["type"] = "service"
-                data["service_objects"][service_name]["protocol"] = match2.group(1)
+                data["service_objects"][service_name]["protocol"] = re_match2.group(1)
 
-            if match2.group(1) == "icmp":
+            if re_match2.group(1) == "icmp":
 
                 data["service_objects"][service_name]["icmp_type"] = ""
                 data["service_objects"][service_name]["icmp_code"] = ""
 
-            data["service_groups"][match.group(1)]["members"].append(service_name)
+            data["service_groups"][re_match.group(1)]["members"].append(service_name)
 
         ### Need to parse protocol groups here
 
@@ -529,338 +810,614 @@ def parse(logger, src_config):
 
     logger.log(2, __name__ + ": parse firewall policies")
 
-    for match in re.finditer(
-        r"access-list ([\S]{1,}) (remark .*|extended (permit|deny) ([a-z0-9]{1,6}|object-group [\S]{1,}) (host [\S]{1,}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|[\S]{1,} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|object-group [\S]*(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|interface(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|any(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?) (host [\S]{1,}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|[\S]{1,} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|object-group [\S]*(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|interface(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?|any(?: (?:eq|gt|lt|neq|range [\S]{1,}) [\S]{1,}| object-group [\S]{1,})?)(?: (log))?(?: (disable))?(?: (inactive))?)",
-        src_config,
+    ## parse policy interface mappings
+
+    acl_interface_mappings = {}
+
+    for re_match in re.finditer(
+        "^access-group (.*) (in|out) interface (.*)$", src_config, re.MULTILINE
     ):
 
-        # Check if the entry is a remark
+        acl_name = re_match.group(1)
+        acl_direction = re_match.group(2)
+        acl_interface = re_match.group(3)
 
-        ### need to fix remarks
+        acl_interface_mappings[acl_name] = {}
 
-        # if "remark" in match.group(2):
+        if acl_direction == "out":
+            acl_interface_mappings[acl_name]["src_interface"] = ""
+            acl_interface_mappings[acl_name]["dst_interface"] = acl_interface
 
-        #     data["policies"][policy_id]["type"] = "remark"
-        #     data["policies"][policy_id]["comment"] = match.group(2)[7:]
+        else:
+            acl_interface_mappings[acl_name]["src_interface"] = acl_interface
+            acl_interface_mappings[acl_name]["dst_interface"] = ""
 
-        # # If not then get all policy objects
+    ## parse access list rules
 
-        if "remark" not in match.group(2):
+    acl_remark = ""
 
-            data["policies"][policy_id] = {}
+    for match in re.finditer("^access-list .*", src_config, re.MULTILINE):
 
-            data["policies"][policy_id]["action"] = ""
-            data["policies"][policy_id]["description"] = ""
-            data["policies"][policy_id]["dst_addresses"] = []
-            data["policies"][policy_id]["dst_interfaces"] = []
-            data["policies"][policy_id]["dst_services"] = []
-            data["policies"][policy_id]["enabled"] = True
-            data["policies"][policy_id]["logging"] = False
-            data["policies"][policy_id]["name"] = ""
-            data["policies"][policy_id]["nat"] = ""
-            data["policies"][policy_id]["policy_set"] = match.group(1)
-            data["policies"][policy_id]["protocol"] = match.group(4)
-            data["policies"][policy_id]["schedule"] = ""
-            data["policies"][policy_id]["src_addresses"] = []
-            data["policies"][policy_id]["src_interfaces"] = []
-            data["policies"][policy_id]["src_services"] = []
-            data["policies"][policy_id]["type"] = "policy"
-            data["policies"][policy_id]["users_excluded"] = []
-            data["policies"][policy_id]["users_included"] = []
+        acl_rule = match.group(0).split(" ")
 
-            if match.group(3) == "permit":
-                data["policies"][policy_id]["action"] = "allow"
+        if acl_rule[1] in acl_interface_mappings:
 
-            elif match.group(3) == "deny":
-                data["policies"][policy_id]["action"] = "discard"
+            if acl_rule[2] == "remark":  ## ACL remark entry
 
-            ### Need to add checks for policy service object group, protocol group and single protocol
+                acl_remark = match.group(0).replace(
+                    "access-list " + acl_rule[1] + " remark ", ""
+                )
 
-            # Get source address(es) and port(s) if applicable
+            elif acl_rule[2] == "extended":  ## ACL extended entry
 
-            policy_src_any = re.search(
-                r"^(any)(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(5),
-            )
-            policy_src_group = re.search(
-                r"object-group ([\S]*)(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(5),
-            )
-            policy_src_addr = re.search(
-                r"([\S]{1,}) (?:(?:(?:255\.){3}(?:255|254|252|248|240|224|192|128|0+))|(?:(?:255\.){2}(?:255|254|252|248|240|224|192|128|0+)\.0)|(?:(?:255\.)(?:255|254|252|248|240|224|192|128|0+)(?:\.0+){2})|(?:(?:255|254|252|248|240|224|192|128|0+)(?:\.0+){3}))(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(5),
-            )
-            policy_src_host = re.search(
-                r"host ([\S]{1,})(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(5),
-            )
-            policy_src_manual = re.search(
-                r"([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(5),
-            )
+                policy = {}
 
-            # Check if any and parse vars
+                policy["action"] = ""
+                policy["description"] = ""
+                policy["dst_addresses"] = []
+                policy["dst_interfaces"] = []
+                policy["dst_services"] = []
+                policy["enabled"] = True
+                policy["logging"] = False
+                policy["name"] = ""
+                policy["nat"] = ""
+                policy["policy_set"] = acl_rule[1]
+                policy["protocol"] = ""
+                policy["schedule"] = ""
+                policy["src_addresses"] = []
+                policy["src_interfaces"] = []
+                policy["src_services"] = []
+                policy["type"] = "policy"
+                policy["users_excluded"] = []
+                policy["users_included"] = []
 
-            if policy_src_any:
+                ## map interface
 
-                src_address = {}
-                src_address["name"] = "any"
-                src_address["type"] = "any"
+                if policy["policy_set"] in acl_interface_mappings:
 
-                data["policies"][policy_id]["src_addresses"].append(src_address)
+                    if acl_interface_mappings[policy["policy_set"]]["src_interface"]:
 
-                policy_src = policy_src_any
-
-            # Check if groups and parse vars
-
-            if policy_src_group:
-
-                src_address = {}
-                src_address["name"] = policy_src_group.group(1)
-                src_address["type"] = "group"
-
-                data["policies"][policy_id]["src_addresses"].append(src_address)
-
-                policy_src = policy_src_group
-
-            # Check if network object and parse vars
-
-            if policy_src_addr:
-
-                src_address = {}
-                src_address["name"] = policy_src_addr.group(1)
-                src_address["type"] = "host"
-
-                data["policies"][policy_id]["src_addresses"].append(src_address)
-
-                policy_src = policy_src_addr
-
-            # Check if host and parse vars
-
-            if policy_src_host:
-
-                src_address = {}
-                src_address["name"] = policy_src_host.group(1)
-                src_address["type"] = "host"
-
-                data["policies"][policy_id]["src_addresses"].append(src_address)
-
-                policy_src = policy_src_host
-
-            # Check if directly specified and parse vars
-
-            ### Should probably create and reference a network object here
-
-            if policy_src_manual:
-
-                src_address = {}
-                src_address["name"] = policy_src_manual.group(1).replace(" ", "/")
-                src_address["type"] = "manual"
-
-                ### need to parse manual address entry, create network object then add that to src_addresses
-
-                data["policies"][policy_id]["src_addresses"].append(src_address)
-
-                policy_src = policy_src_manual
-
-            # If we have a source address then look for source service
-
-            if data["policies"][policy_id]["src_addresses"]:
-
-                if policy_src[2]:
-
-                    if policy_src[2] == "object-group":
-
-                        src_service = {}
-                        src_service["name"] = resolve_default_service(policy_src[3])
-                        src_service["type"] = "group"
-
-                        data["policies"][policy_id]["src_services"].append(src_service)
-
-                    elif policy_src[2] == "range":
-
-                        ### need to create and reference a service object
-
-                        src_service = {}
-                        src_service["name"] = (
-                            resolve_default_service(policy_src[3])
-                            + "-"
-                            + resolve_default_service(policy_src[4])
+                        policy["src_interfaces"].append(
+                            acl_interface_mappings[policy["policy_set"]][
+                                "src_interface"
+                            ]
                         )
-                        src_service["type"] = "range"
 
-                        data["policies"][policy_id]["src_services"].append(src_service)
+                    if acl_interface_mappings[policy["policy_set"]]["dst_interface"]:
 
-                    elif policy_src[2] == "eq":
+                        policy["src_interfaces"].append(
+                            acl_interface_mappings[policy["policy_set"]][
+                                "dst_interface"
+                            ]
+                        )
 
-                        src_service = {}
-                        src_service["name"] = resolve_default_service(policy_src[3])
-                        src_service["type"] = "service"
+                ## parse action
 
-                        data["policies"][policy_id]["src_services"].append(src_service)
+                if acl_rule[3] == "permit":
+                    policy["action"] = "allow"
 
-                    ### Need to add support for other operators - gt, lt, neq
+                elif acl_rule[3] == "deny":
+                    policy["action"] = "discard"
+
+                ## start index from current position
+
+                i = 4
+
+                ## add remark if found in previous line then reset variable
+
+                if acl_remark:
+                    policy["description"] = acl_remark
+                    acl_remark = ""
+
+                ## parse protocol
+
+                if acl_rule[4] in ["object", "object-group"]:
+                    policy["dst_services"].append(acl_rule[5])
+                    policy["protocol"] = acl_rule[5]
+                    i = i + 2
+
+                elif acl_rule[4] in ["ip"]:
+                    policy["dst_services"].append("any")
+                    policy["protocol"] = acl_rule[4]
+                    i = i + 1
+
+                else:
+                    policy["protocol"] = acl_rule[4]
+                    i = i + 1
+
+                ## parse source addresses
+
+                if acl_rule[i] == "object":  ## source object
+
+                    src_address = {}
+                    src_address["name"] = acl_rule[i + 1]
+                    src_address["type"] = "network"
+
+                    policy["src_addresses"].append(src_address)
+
+                    i = i + 2
+
+                elif acl_rule[i] == "object-group":  ## source object-group
+
+                    src_address = {}
+                    src_address["name"] = acl_rule[i + 1]
+                    src_address["type"] = "group"
+
+                    policy["src_addresses"].append(src_address)
+
+                    i = i + 2
+
+                elif acl_rule[i] == "host":  ## source host
+
+                    name_object = lookup_name(acl_rule[i + 1])
+
+                    if name_object:  ## check for associated name object
+
+                        network_object = acl_rule[i + 1]
+
+                        if network_object not in data["network_objects"]:
+
+                            data["network_objects"][network_object] = {}
+                            data["network_objects"][network_object]["type"] = "host"
+                            data["network_objects"][network_object][
+                                "host"
+                            ] = name_object.group(1)
+
+                            if name_object.group(2):
+                                data["network_objects"][network_object][
+                                    "description"
+                                ] = name_object.group(2)
+
+                            else:
+                                data["network_objects"][network_object][
+                                    "description"
+                                ] = ""
+
+                    else:  ## otherwise manually defined host address
+
+                        network_object = acl_rule[i + 1]
+
+                        if network_object not in data["network_objects"]:
+
+                            data["network_objects"][network_object] = {}
+                            data["network_objects"][network_object]["type"] = "host"
+                            data["network_objects"][network_object]["host"] = acl_rule[
+                                i + 1
+                            ]
+                            data["network_objects"][network_object]["description"] = ""
+
+                    src_address = {}
+                    src_address["name"] = network_object
+                    src_address["type"] = "network"
+
+                    policy["src_addresses"].append(src_address)
+
+                    i = i + 2
+
+                elif acl_rule[i] in ["any", "any4", "any6"]:  ## source any
+
+                    src_address = {}
+                    src_address["name"] = "any"
+                    src_address["type"] = "any"
+
+                    policy["src_addresses"].append(src_address)
+
+                    i = i + 1
 
                 else:
 
-                    src_service = {}
-                    src_service["name"] = "any"
-                    src_service["type"] = "any"
+                    name_object = lookup_name(acl_rule[i])
 
-                    data["policies"][policy_id]["src_services"].append(src_service)
+                    if acl_rule[i + 1] == "255.255.255.255":  ## check if a host
 
-            # Get destination address(es) and port(s) if applicable
+                        if name_object:  ## check for associated name object
 
-            policy_dst_any = re.search(
-                r"^(any)(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(6),
-            )
-            policy_dst_group = re.search(
-                r"object-group ([\S]*)(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(6),
-            )
-            policy_dst_addr = re.search(
-                r"([\S]{1,}) (?:(?:(?:255\.){3}(?:255|254|252|248|240|224|192|128|0+))|(?:(?:255\.){2}(?:255|254|252|248|240|224|192|128|0+)\.0)|(?:(?:255\.)(?:255|254|252|248|240|224|192|128|0+)(?:\.0+){2})|(?:(?:255|254|252|248|240|224|192|128|0+)(?:\.0+){3}))(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(6),
-            )
-            policy_dst_host = re.search(
-                r"host ([\S]{1,})(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(6),
-            )
-            policy_dst_manual = re.search(
-                r"([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3} [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})(?: (eq|gt|lt|neq|range|object-group) ([\S]{1,})(?: ([\S]{1,}))?)?",
-                match.group(6),
-            )
+                            network_object = acl_rule[i]
 
-            # Check if any and parse vars
+                            if network_object not in data["network_objects"]:
 
-            if policy_dst_any:
+                                data["network_objects"][network_object] = {}
+                                data["network_objects"][network_object]["type"] = "host"
+                                data["network_objects"][network_object][
+                                    "host"
+                                ] = name_object.group(1)
 
-                dst_address = {}
-                dst_address["name"] = "any"
-                dst_address["type"] = "any"
+                                if name_object.group(2):
+                                    data["network_objects"][network_object][
+                                        "description"
+                                    ] = name_object.group(2)
 
-                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+                                else:
+                                    data["network_objects"][network_object][
+                                        "description"
+                                    ] = ""
 
-                policy_dst = policy_dst_any
+                        else:  ## otherwise manually defined host
 
-            # Check if group and parse vars
+                            network_object = acl_rule[i]
 
-            if policy_dst_group:
+                            if network_object not in data["network_objects"]:
 
-                dst_address = {}
-                dst_address["name"] = policy_dst_group.group(1)
-                dst_address["type"] = "group"
+                                data["network_objects"][network_object] = {}
+                                data["network_objects"][network_object]["type"] = "host"
+                                data["network_objects"][network_object][
+                                    "host"
+                                ] = acl_rule[i]
+                                data["network_objects"][network_object][
+                                    "description"
+                                ] = ""
 
-                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+                    else:  ## else is a network
 
-                policy_dst = policy_dst_group
+                        if name_object:  ## check for associated name object
 
-            # Check if network object and parse vars
+                            network_object = acl_rule[i] + "_" + acl_rule[i + 1]
 
-            if policy_dst_addr:
+                            if network_object not in data["network_objects"]:
 
-                dst_address = {}
-                dst_address["name"] = policy_dst_addr.group(1)
-                dst_address["type"] = "host"
+                                data["network_objects"][network_object] = {}
+                                data["network_objects"][network_object][
+                                    "type"
+                                ] = "network"
+                                data["network_objects"][network_object][
+                                    "network"
+                                ] = name_object.group(1)
+                                data["network_objects"][network_object][
+                                    "mask"
+                                ] = acl_rule[i + 1]
 
-                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+                                if name_object.group(2):
+                                    data["network_objects"][network_object][
+                                        "description"
+                                    ] = name_object.group(2)
 
-                policy_dst = policy_dst_addr
+                                else:
+                                    data["network_objects"][network_object][
+                                        "description"
+                                    ] = ""
 
-            # Check if host and parse vars
+                        else:  ## otherwise manually defined network/mask
 
-            if policy_dst_host:
+                            network_object = acl_rule[i] + "_" + acl_rule[i + 1]
 
-                dst_address = {}
-                dst_address["name"] = policy_dst_host.group(1)
-                dst_address["type"] = "host"
+                            if network_object not in data["network_objects"]:
 
-                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+                                data["network_objects"][network_object] = {}
+                                data["network_objects"][network_object][
+                                    "type"
+                                ] = "network"
+                                data["network_objects"][network_object][
+                                    "network"
+                                ] = acl_rule[i]
+                                data["network_objects"][network_object][
+                                    "mask"
+                                ] = acl_rule[i + 1]
+                                data["network_objects"][network_object][
+                                    "description"
+                                ] = ""
 
-                policy_dst = policy_dst_host
+                    src_address = {}
+                    src_address["name"] = network_object
+                    src_address["type"] = "network"
 
-            # Check if directly specified and parse vars
+                    policy["src_addresses"].append(src_address)
 
-            ### Should probably create and reference a network object here
+                    i = i + 2
 
-            if policy_dst_manual:
+                ## parse destination addresses
 
-                dst_address = {}
-                dst_address["name"] = policy_dst_manual.group(1).replace(" ", "/")
-                dst_address["type"] = "manual"
+                if acl_rule[i] == "object":  ## destination object
 
-                ### need to parse manual address entry, create network object then add that to src_addresses
+                    dst_address = {}
+                    dst_address["name"] = acl_rule[i + 1]
+                    dst_address["type"] = "network"
 
-                data["policies"][policy_id]["dst_addresses"].append(dst_address)
+                    policy["dst_addresses"].append(dst_address)
 
-                policy_dst = policy_dst_manual
+                    i = i + 2
 
-            # If we have a destination address then look for destination service
+                elif acl_rule[i] == "object-group":  ## destination object-group
 
-            if data["policies"][policy_id]["dst_addresses"]:
+                    dst_address = {}
+                    dst_address["name"] = acl_rule[i + 1]
+                    dst_address["type"] = "group"
 
-                if policy_dst[2]:
+                    policy["dst_addresses"].append(dst_address)
 
-                    if policy_dst[2] == "object-group":
+                    i = i + 2
 
-                        dst_service = {}
-                        dst_service["name"] = resolve_default_service(policy_dst[3])
-                        dst_service["type"] = "group"
+                elif acl_rule[i] == "host":  ## destination host
 
-                        data["policies"][policy_id]["dst_services"].append(dst_service)
+                    name_object = lookup_name(acl_rule[i + 1])
 
-                    elif policy_src[2] == "range":
+                    if name_object:  ## check for associated name object
 
-                        ### need to create and reference a service object
+                        network_object = acl_rule[i + 1]
 
-                        dst_service = {}
-                        dst_service["name"] = (
-                            resolve_default_service(policy_dst[3])
-                            + "-"
-                            + resolve_default_service(policy_dst[4])
-                        )
-                        dst_service["type"] = "range"
+                        if network_object not in data["network_objects"]:
 
-                        data["policies"][policy_id]["dst_services"].append(dst_service)
+                            data["network_objects"][network_object] = {}
+                            data["network_objects"][network_object]["type"] = "host"
+                            data["network_objects"][network_object][
+                                "host"
+                            ] = name_object.group(1)
 
-                    elif policy_dst[2] == "eq":
+                            if name_object.group(2):
+                                data["network_objects"][network_object][
+                                    "description"
+                                ] = name_object.group(2)
 
-                        dst_service = {}
-                        dst_service["name"] = resolve_default_service(policy_dst[3])
-                        dst_service["type"] = "service"
+                            else:
+                                data["network_objects"][network_object][
+                                    "description"
+                                ] = ""
 
-                        data["policies"][policy_id]["dst_services"].append(dst_service)
+                    else:  ## otherwise manually defined host address
 
-                    ### Need to add support for other operators here - gt, lt, neq
+                        network_object = acl_rule[i + 1]
+
+                        if network_object not in data["network_objects"]:
+
+                            data["network_objects"][network_object] = {}
+                            data["network_objects"][network_object]["type"] = "host"
+                            data["network_objects"][network_object]["host"] = acl_rule[
+                                i + 1
+                            ]
+                            data["network_objects"][network_object]["description"] = ""
+
+                    dst_address = {}
+                    dst_address["name"] = network_object
+                    dst_address["type"] = "network"
+
+                    policy["dst_addresses"].append(dst_address)
+
+                    i = i + 2
+
+                elif acl_rule[i] in ["any", "any4", "any6"]:  ## destination any
+
+                    dst_address = {}
+                    dst_address["name"] = "any"
+                    dst_address["type"] = "any"
+
+                    policy["dst_addresses"].append(dst_address)
+
+                    i = i + 1
 
                 else:
 
-                    dst_service = {}
-                    dst_service["name"] = "any"
-                    dst_service["type"] = "any"
+                    name_object = lookup_name(acl_rule[i])
 
-                    data["policies"][policy_id]["dst_services"].append(dst_service)
+                    if acl_rule[i + 1] == "255.255.255.255":  ## check if a host
 
-            # Check if logging enabled
+                        if name_object:  ## check for associated name object
 
-            if match.group(7) == "log":
+                            network_object = acl_rule[i]
 
-                data["policies"][policy_id]["logging"] = True
+                            if network_object not in data["network_objects"]:
 
-            # Check if policy disabled
+                                data["network_objects"][network_object] = {}
+                                data["network_objects"][network_object]["type"] = "host"
+                                data["network_objects"][network_object][
+                                    "host"
+                                ] = name_object.group(1)
 
-            if match.group(8) == "disable":
+                                if name_object.group(2):
+                                    data["network_objects"][network_object][
+                                        "description"
+                                    ] = name_object.group(2)
 
-                data["policies"][policy_id]["enabled"] = False
+                                else:
+                                    data["network_objects"][network_object][
+                                        "description"
+                                    ] = ""
 
-            # Check if policy inactive
+                        else:  ## otherwise manually defined host
 
-            if match.group(9) == "inactive":
+                            network_object = acl_rule[i]
 
-                data["policies"][policy_id]["enabled"] = False
+                            if network_object not in data["network_objects"]:
 
-        policy_id += 1
+                                data["network_objects"][network_object] = {}
+                                data["network_objects"][network_object]["type"] = "host"
+                                data["network_objects"][network_object][
+                                    "host"
+                                ] = acl_rule[i]
+                                data["network_objects"][network_object][
+                                    "description"
+                                ] = ""
+
+                    else:  ## else is a network
+
+                        if name_object:  ## check for associated name object
+
+                            network_object = acl_rule[i] + "_" + acl_rule[i + 1]
+
+                            if network_object not in data["network_objects"]:
+
+                                data["network_objects"][network_object] = {}
+                                data["network_objects"][network_object][
+                                    "type"
+                                ] = "network"
+                                data["network_objects"][network_object][
+                                    "network"
+                                ] = name_object.group(1)
+                                data["network_objects"][network_object][
+                                    "mask"
+                                ] = acl_rule[i + 1]
+
+                                if name_object.group(2):
+                                    data["network_objects"][network_object][
+                                        "description"
+                                    ] = name_object.group(2)
+
+                                else:
+                                    data["network_objects"][network_object][
+                                        "description"
+                                    ] = ""
+
+                        else:  ## otherwise manually defined network/mask
+
+                            network_object = acl_rule[i] + "_" + acl_rule[i + 1]
+
+                            if network_object not in data["network_objects"]:
+
+                                data["network_objects"][network_object] = {}
+                                data["network_objects"][network_object][
+                                    "type"
+                                ] = "network"
+                                data["network_objects"][network_object][
+                                    "network"
+                                ] = acl_rule[i]
+                                data["network_objects"][network_object][
+                                    "mask"
+                                ] = acl_rule[i + 1]
+                                data["network_objects"][network_object][
+                                    "description"
+                                ] = ""
+
+                    dst_address = {}
+                    dst_address["name"] = network_object
+                    dst_address["type"] = "network"
+
+                    policy["dst_addresses"].append(dst_address)
+
+                    i = i + 2
+
+                ## check remaining entries for ACL args
+
+                for acl_args in acl_rule[i:]:
+
+                    if "inactive" in acl_args:
+                        policy["enabled"] = False
+
+                    if "log" in acl_args:
+                        policy["logging"] = True
+
+                ## append to policy list
+
+                data["policies"].append(policy)
+
+            else:  ## other ACL types not supported
+
+                logger.log(3, __name__ + ": ACL type " + acl_rule[2] + " not supported")
+
+                acl_remark = ""
+
+    for id, policy in enumerate(data["policies"]):
+
+        ## check all source interfaces in src_interfaces
+
+        for src_address in policy["src_addresses"]:
+
+            ## check if a network object or group
+
+            if (
+                src_address["type"] == "group"
+            ):  ## if a group use name of the first member
+                name = data["network_groups"][src_address["name"]]["members"][0]
+
+                while (
+                    name in data["network_groups"]
+                ):  ## repeat through nested groups until a network object found
+                    name = data["network_groups"][name]["members"][0]
+
+            else:  ## if a network object use name as is
+
+                name = src_address["name"]
+
+            ## resolve source interface
+
+            if name == "any":  ## handle any
+
+                if policy["dst_interfaces"]:
+
+                    src_interface = "any"
+
+                elif not policy["src_interfaces"] and not policy["dst_interfaces"]:
+
+                    src_interface = "any"
+
+            else:  ## handle network objects
+
+                if data["network_objects"][name]["type"] == "host":
+                    ip_address = data["network_objects"][name]["host"]
+
+                elif data["network_objects"][name]["type"] == "network":
+                    ip_address = data["network_objects"][name]["network"]
+
+                elif data["network_objects"][name]["type"] == "range":
+                    ip_address = data["network_objects"][name]["address_first"]
+
+                ## pass to interface lookup function
+
+                src_interface = interface_lookup(
+                    ip_address, data["interfaces"], data["routes"]
+                )
+
+            ## if we have a src_interface back from lookup then add to policy
+
+            if src_interface:
+
+                if src_interface not in policy["src_interfaces"]:
+
+                    data["policies"][id]["src_interfaces"].append(src_interface)
+
+        ## check all destination interfaces in dst_interfaces
+
+        for dst_address in policy["dst_addresses"]:
+
+            ## check if a network object or group
+
+            if (
+                dst_address["type"] == "group"
+            ):  ## if a group use name of the first member
+                name = data["network_groups"][dst_address["name"]]["members"][0]
+
+                while (
+                    name in data["network_groups"]
+                ):  ## repeat through nested groups until a network object found
+                    name = data["network_groups"][name]["members"][0]
+
+            else:  ## if a network object use name as is
+
+                name = dst_address["name"]
+
+            ## resolve destination interface
+
+            if name == "any":  ## handle any
+
+                if policy["src_interfaces"]:
+
+                    dst_interface = "any"
+
+                elif not policy["dst_interfaces"] and not policy["dst_interfaces"]:
+
+                    dst_interface = "any"
+
+            else:  ## handle network objects
+
+                if data["network_objects"][name]["type"] == "host":
+                    ip_address = data["network_objects"][name]["host"]
+
+                elif data["network_objects"][name]["type"] == "network":
+                    ip_address = data["network_objects"][name]["network"]
+
+                elif data["network_objects"][name]["type"] == "range":
+                    ip_address = data["network_objects"][name]["address_first"]
+
+                ## pass to interface lookup function
+
+                dst_interface = interface_lookup(
+                    ip_address, data["interfaces"], data["routes"]
+                )
+
+            ## if we have a dst_interface back from lookup then add to policy
+
+            if dst_interface:
+
+                if dst_interface not in policy["dst_interfaces"]:
+
+                    data["policies"][id]["dst_interfaces"].append(dst_interface)
 
     # Parse NAT
 
