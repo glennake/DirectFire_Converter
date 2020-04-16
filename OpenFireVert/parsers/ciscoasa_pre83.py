@@ -56,6 +56,8 @@ def parse(logger, src_config, routing_info=""):
     policy_id = 1
     nat_id = 1
 
+    names = {}
+
     ## add default network objects
 
     data["network_objects"]["any"] = {}
@@ -88,22 +90,158 @@ def parse(logger, src_config, routing_info=""):
         "udp",
     ]
 
-    # Function to resolve default services from name to port number
+    # Function to resolve name object to ip address
 
     def lookup_name(name):
 
-        name_object = re.search(
-            "name ("
-            + common.common_regex.ipv4_address
-            + ") "
-            + name
-            + "(?: description (.*))?",
-            src_config,
-        )
+        if not names:
+
+            # parse names
+
+            for re_match in re.finditer(
+                "name ("
+                + common.common_regex.ipv4_address
+                + ") ([A-Za-z0-9-_.]{1,63})(?: description (.*))?",
+                src_config,
+            ):
+
+                matched_name = re_match.group(2)
+
+                names[matched_name] = {}
+
+                names[matched_name]["ip_address"] = re_match.group(1)
+
+                if re_match.group(3):  ## if description found
+                    names[matched_name]["description"] = re_match.group(3)
+
+                else:  ## if description not found
+                    names[matched_name]["description"] = re_match.group(3)
+
+        # lookup name
+
+        if name in names:  ## if name found return it
+
+            name_object = names[name]
+
+        else:  ## if name not found return what was passed
+
+            name_object = {}
+            name_object["ip_address"] = name
+            name_object["description"] = ""
+
+        # return name object
 
         return name_object
 
-    def resolve_default_service(service):
+    # Function to resolve icmp type from name to type code
+
+    def resolve_named_icmp(icmp):
+
+        try:
+
+            int(icmp)
+
+        except:
+
+            if icmp == "echo-reply":
+                icmp = "0"
+            elif icmp == "unreachable":
+                icmp = "3"
+            elif icmp == "destination-unreachable":
+                icmp = "3"
+            elif icmp == "source-quench":
+                icmp = "4"
+            elif icmp == "redirect":
+                icmp = "5"
+            elif icmp == "alternate-address":
+                icmp = "6"
+            elif icmp == "echo":
+                icmp = "8"
+            elif icmp == "echo-request":
+                icmp = "8"
+            elif icmp == "router-advertisement":
+                icmp = "9"
+            elif icmp == "router-solicitation":
+                icmp = "10"
+            elif icmp == "time-exceeded":
+                icmp = "11"
+            elif icmp == "parameter-problem":
+                icmp = "12"
+            elif icmp == "timestamp-request":
+                icmp = "13"
+            elif icmp == "timestamp-reply":
+                icmp = "14"
+            elif icmp == "information-request":
+                icmp = "15"
+            elif icmp == "information-reply":
+                icmp = "16"
+            elif icmp == "mask-request":
+                icmp = "17"
+            elif icmp == "mask-reply":
+                icmp = "18"
+            elif icmp == "conversion-error":
+                icmp = "31"
+            elif icmp == "mobile-redirect":
+                icmp = "32"
+
+        return icmp
+
+    # Function to resolve protocols from name to protocol number
+
+    def resolve_named_protocol(protocol):
+
+        try:
+
+            int(protocol)
+
+        except:
+
+            if protocol == "ah":
+                protocol = "51"
+            elif protocol == "eigrp":
+                protocol = "88"
+            elif protocol == "esp":
+                protocol = "50"
+            elif protocol == "gre":
+                protocol = "47"
+            elif protocol == "icmp":
+                protocol = "1"
+            elif protocol == "icmp6":
+                protocol = "58"
+            elif protocol == "igmp":
+                protocol = "2"
+            elif protocol == "igrp":
+                protocol = "9"
+            elif protocol == "ip":
+                protocol = "0"
+            elif protocol == "ipinip":
+                protocol = "4"
+            elif protocol == "ipsec":
+                protocol = "50"
+            elif protocol == "nos":
+                protocol = "94"
+            elif protocol == "ospf":
+                protocol = "89"
+            elif protocol == "pcp":
+                protocol = "108"
+            elif protocol == "pim":
+                protocol = "103"
+            elif protocol == "pptp":
+                protocol = "47"
+            elif protocol == "snp":
+                protocol = "109"
+            elif protocol == "tcp":
+                protocol = "6"
+            elif protocol == "tcp-udp":
+                protocol = "0"
+            elif protocol == "udp":
+                protocol = "17"
+
+        return protocol
+
+    # Function to resolve services from name to port number
+
+    def resolve_named_service(service):
 
         try:
 
@@ -168,7 +306,7 @@ def parse(logger, src_config, routing_info=""):
             elif service == "isakmp":
                 service = "500"
             elif service == "kerberos":
-                service = "88"
+                service = "750"
             elif service == "klogin":
                 service = "543"
             elif service == "kshell":
@@ -280,6 +418,8 @@ def parse(logger, src_config, routing_info=""):
 
         interface_config = str(re_match.group(0)).split("\n")
 
+        interface_name = re_match.group(1)
+
         for line in interface_config:
 
             ## find nameif
@@ -328,17 +468,19 @@ def parse(logger, src_config, routing_info=""):
 
             ## find description
 
-            if " description" in line:
-                data["interfaces"][interface_name]["description"] = line[13:]
+            if "description" in line:
+                data["interfaces"][interface_name]["description"] = (
+                    str(line[13:]).strip().lstrip()
+                )
 
             ## find shutdown
 
-            if " shutdown" in line:
+            if "shutdown" in line:
                 data["interfaces"][interface_name]["enabled"] = False
 
             ## find ip config
 
-            if " ip address" in line and " no ip address" not in line:
+            if "ip address" in line and "no ip address" not in line:
 
                 ip_address_line = line.split(" ")
 
@@ -347,6 +489,13 @@ def parse(logger, src_config, routing_info=""):
                 ip_config["mask"] = ip_address_line[4]
 
                 data["interfaces"][interface_name]["ipv4_config"].append(ip_config)
+
+            ## find vlan
+
+            if "vlan" in line:
+                data["interfaces"][interface_name]["vlan_id"] = (
+                    str(line[6:]).strip().lstrip()
+                )
 
     # Parse zones
 
@@ -382,7 +531,7 @@ def parse(logger, src_config, routing_info=""):
         name_object = lookup_name(route_config[2])
 
         if name_object:
-            route["network"] = name_object.group(1)
+            route["network"] = name_object["ip_address"]
 
         else:
             route["network"] = route_config[2]
@@ -390,35 +539,6 @@ def parse(logger, src_config, routing_info=""):
         ## add to routes
 
         data["routes"].append(route)
-
-    # Parse IPv4 network objects
-
-    # logger.log(2, __name__ + ": parse IPv4 network objects")
-
-    # for re_match in re.finditer(
-    #     r"name ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}) (\S{1,})(?: description (.{1,}))?",
-    #     src_config,
-    # ):
-
-    #     data["network_objects"][re_match.group(2)] = {}
-    #     data["network_objects"][re_match.group(2)]["type"] = "host"
-    #     data["network_objects"][re_match.group(2)]["host"] = re_match.group(1)
-    #     data["network_objects"][re_match.group(2)]["description"] = re_match.group(3)
-
-    # # If address object is a network, change its type and seperate address / mask
-
-    # for address, attributes in data["network_objects"].items():
-
-    #     for re_match in re.finditer(
-    #         r"network-object "
-    #         + address
-    #         + " ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})",
-    #         src_config,
-    #     ):
-
-    #         data["network_objects"][address]["type"] = "network"
-    #         data["network_objects"][address]["network"] = attributes["host"]
-    #         data["network_objects"][address]["mask"] = re_match.group(1)
 
     # Parse network groups
 
@@ -449,7 +569,7 @@ def parse(logger, src_config, routing_info=""):
 
         for member in network_groups[i:]:
 
-            if " network-object host" in member:  ## if host member
+            if "network-object host" in member:  ## if host member
 
                 network_object = member[21:]
 
@@ -459,14 +579,14 @@ def parse(logger, src_config, routing_info=""):
 
                     data["network_objects"][network_object] = {}
                     data["network_objects"][network_object]["type"] = "host"
-                    data["network_objects"][network_object]["host"] = name_object.group(
-                        1
-                    )
+                    data["network_objects"][network_object]["host"] = name_object[
+                        "ip_address"
+                    ]
 
-                    if name_object.group(2):
+                    if name_object["description"]:
                         data["network_objects"][network_object][
                             "description"
-                        ] = name_object.group(2)
+                        ] = name_object["description"]
 
                     else:
                         data["network_objects"][network_object]["description"] = ""
@@ -484,7 +604,7 @@ def parse(logger, src_config, routing_info=""):
                     network_object
                 )
 
-            elif " network-object" in member:  ## if network member
+            elif "network-object" in member:  ## if network member
 
                 network_config = str(member[16:]).split(" ")
 
@@ -498,14 +618,14 @@ def parse(logger, src_config, routing_info=""):
 
                         data["network_objects"][network_object] = {}
                         data["network_objects"][network_object]["type"] = "host"
-                        data["network_objects"][network_object][
-                            "host"
-                        ] = name_object.group(1)
+                        data["network_objects"][network_object]["host"] = name_object[
+                            "ip_address"
+                        ]
 
-                        if name_object.group(2):
+                        if name_object["description"]:
                             data["network_objects"][network_object][
                                 "description"
-                            ] = name_object.group(2)
+                            ] = name_object["description"]
 
                         else:
                             data["network_objects"][network_object]["description"] = ""
@@ -527,15 +647,15 @@ def parse(logger, src_config, routing_info=""):
                         data["network_objects"][network_object]["type"] = "network"
                         data["network_objects"][network_object][
                             "network"
-                        ] = name_object.group(1)
+                        ] = name_object["ip_address"]
                         data["network_objects"][network_object][
                             "mask"
                         ] = network_config[1]
 
-                        if name_object.group(2):
+                        if name_object["description"]:
                             data["network_objects"][network_object][
                                 "description"
-                            ] = name_object.group(2)
+                            ] = name_object["description"]
 
                         else:
                             data["network_objects"][network_object]["description"] = ""
@@ -558,7 +678,7 @@ def parse(logger, src_config, routing_info=""):
                     network_object
                 )
 
-            elif " group-object" in member:  ## if group member
+            elif "group-object" in member:  ## if group member
 
                 network_group = member[14:]
 
@@ -566,245 +686,264 @@ def parse(logger, src_config, routing_info=""):
                     network_group
                 )
 
-    # for re_match in re.finditer(
-    #     r"object-group network ([\S]*)[\s](?: description .*[\s])?(?: (?:network-object (?:host .*|.* [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})[\s])){1,}",
-    #     src_config,
-    # ):
-
-    #     data["network_groups"][re_match.group(1)] = {}
-    #     data["network_groups"][re_match.group(1)]["type"] = "group"
-    #     data["network_groups"][re_match.group(1)]["description"] = ""
-    #     data["network_groups"][re_match.group(1)]["members"] = []
-
-    #     network_grp_desc = re.search(r" description (.*)", re_match.group(0))
-
-    #     if network_grp_desc:
-    #         data["network_groups"][re_match.group(1)][
-    #             "description"
-    #         ] = network_grp_desc.group(1)
-
-    #     for re_match2 in re.finditer(
-    #         r"(?:network-object (?:host (.*)|(.*) [0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})){1,}",
-    #         re_match.group(0),
-    #     ):
-
-    #         if re_match2.group(1):
-
-    #             data["network_groups"][re_match.group(1)]["members"].append(
-    #                 re_match2.group(1)
-    #             )
-
-    #         if re_match2.group(2):
-
-    #             data["network_groups"][re_match.group(1)]["members"].append(
-    #                 re_match2.group(2)
-    #             )
-
     # Parse service groups
 
     logger.log(2, __name__ + ": parse service groups")
 
-    for re_match in re.finditer(
-        r"object-group service ([\S]*)(?: ([\S]*))?[\s](?: description .*[\s])?(?: port-object (eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?(?:[\s])?| service-object ([\S]*)(?: )?(?:[\s])?(?:(eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?(?:[\s])?)?){1,}",
-        src_config,
-    ):
+    ### need to parse object-group icmp-type
 
-        data["service_groups"][re_match.group(1)] = {}
-        data["service_groups"][re_match.group(1)]["type"] = "group"
-        data["service_groups"][re_match.group(1)]["protocol"] = re_match.group(2)
-        data["service_groups"][re_match.group(1)]["description"] = ""
-        data["service_groups"][re_match.group(1)]["members"] = []
+    ## parse service groups
 
-        service_grp_desc = re.search(r" description (.*)", re_match.group(0))
+    for re_match in re.finditer("object-group service (.*)\n(?: .*\n){1,}", src_config):
 
-        if service_grp_desc:
+        service_groups = str(re_match.group(0)).split("\n")
 
-            data["service_groups"][re_match.group(1)][
-                "description"
-            ] = service_grp_desc.group(1)
+        group_config = service_groups[0][21:].split(" ")
 
-        ### Need to add the ability to parse nested group objects in here
+        group_name = group_config[0]
 
-        # Parse port objects in service group
+        if len(group_config) > 1:
+            group_protocol = group_config[1]
 
-        for re_match2 in re.finditer(
-            r"(?:port-object (eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?)",
-            re_match.group(0),
-        ):
+        data["service_groups"][group_name] = {}
+        data["service_groups"][group_name]["description"] = ""
+        data["service_groups"][group_name]["members"] = []
+        data["service_groups"][group_name]["type"] = "group"
 
-            if re_match2.group(1) == "range":
+        ## check for description and set start index
 
-                service_port_first = resolve_default_service(re_match2.group(2))
-                service_port_last = resolve_default_service(re_match2.group(3))
+        if "description" in service_groups[1]:
+            data["service_groups"][group_name]["description"] = service_groups[1][13:]
+            i = 2
 
-                service_name = service_port_first + "-" + service_port_last
+        else:
+            i = 1
 
-            else:
+        ## loop through service group entries
 
-                service_port = resolve_default_service(re_match2.group(2))
+        for member in service_groups[i:]:
 
-                service_name = service_port
+            member_config = member.lstrip().split(" ")
 
-            # Break tcp-udp service entries to seperate TCP and UDP service objects
+            if member_config[0] == "port-object":  ## if port member
 
-            if re_match.group(2) == "tcp-udp":
+                if group_protocol:
+                    service_name = str(group_protocol) + "_" + member_config[2]
 
-                # Create a TCP service object and add to service group
+                else:
+                    service_name = member_config[2]
 
-                data["service_objects"]["tcp_" + service_name] = {}
+                operator = member_config[1]
 
-                data["service_objects"]["tcp_" + service_name]["protocol"] = "6"
+                ## check operator
 
-                if re_match2.group(1) == "range":
+                if operator == "eq":  ## single port
 
-                    data["service_objects"]["tcp_" + service_name]["type"] = "range"
-                    data["service_objects"]["tcp_" + service_name][
-                        "destination_port_first"
-                    ] = service_port_first
-                    data["service_objects"]["tcp_" + service_name][
-                        "destination_port_last"
-                    ] = service_port_last
+                    if service_name not in data["service_objects"]:
+
+                        data["service_objects"][service_name] = {}
+                        data["service_objects"][service_name]["description"] = ""
+                        data["service_objects"][service_name][
+                            "dst_port"
+                        ] = resolve_named_service(member_config[2])
+                        data["service_objects"][service_name][
+                            "protocol"
+                        ] = resolve_named_protocol(group_protocol)
+                        data["service_objects"][service_name]["src_port"] = ""
+                        data["service_objects"][service_name]["type"] = "service"
+
+                    ## add service object to the group
+
+                    data["service_groups"][group_name]["members"].append(service_name)
+
+                elif operator == "range":  ## port range
+
+                    if service_name not in data["service_objects"]:
+
+                        data["service_objects"][service_name] = {}
+                        data["service_objects"][service_name]["description"] = ""
+                        data["service_objects"][service_name][
+                            "dst_port_first"
+                        ] = resolve_named_service(member_config[2])
+                        data["service_objects"][service_name][
+                            "dst_port_last"
+                        ] = resolve_named_service(member_config[3])
+                        data["service_objects"][service_name][
+                            "protocol"
+                        ] = resolve_named_protocol(group_protocol)
+                        data["service_objects"][service_name]["src_port_first"] = ""
+                        data["service_objects"][service_name]["src_port_last"] = ""
+                        data["service_objects"][service_name]["type"] = "range"
+
+                    ## add service object to the group
+
+                    data["service_groups"][group_name]["members"].append(service_name)
 
                 else:
 
-                    data["service_objects"]["tcp_" + service_name]["type"] = "service"
-                    data["service_objects"]["tcp_" + service_name][
-                        "destination_port"
-                    ] = service_port
-
-                data["service_groups"][re_match.group(1)]["members"].append(
-                    "tcp_" + service_name
-                )
-
-                # Create a UDP service object and add to service group
-
-                data["service_objects"]["udp_" + service_name] = {}
-
-                data["service_objects"]["udp_" + service_name]["protocol"] = "17"
-
-                if re_match2.group(1) == "range":
-
-                    data["service_objects"]["udp_" + service_name]["type"] = "range"
-                    data["service_objects"]["udp_" + service_name][
-                        "destination_port_first"
-                    ] = service_port_first
-                    data["service_objects"]["udp_" + service_name][
-                        "destination_port_last"
-                    ] = service_port_last
-
-                else:
-
-                    data["service_objects"]["udp_" + service_name]["type"] = "service"
-                    data["service_objects"]["udp_" + service_name][
-                        "destination_port"
-                    ] = service_port
-
-                data["service_groups"][re_match.group(1)]["members"].append(
-                    "udp_" + service_name
-                )
-
-            # Process single protocol service entries
-
-            else:
-
-                service_name = re_match.group(2) + "_" + service_name
-
-                data["service_objects"][service_name] = {}
-
-                data["service_objects"][service_name]["protocol"] = re_match.group(2)
-
-                if re_match2.group(1) == "range":
-
-                    data["service_objects"][service_name]["type"] = "range"
-                    data["service_objects"][service_name][
-                        "destination_port_first"
-                    ] = service_port_first
-                    data["service_objects"][service_name][
-                        "destination_port_last"
-                    ] = service_port_last
-
-                else:
-
-                    data["service_objects"][service_name]["type"] = "service"
-                    data["service_objects"][service_name][
-                        "destination_port"
-                    ] = service_port
-
-                data["service_groups"][re_match.group(1)]["members"].append(
-                    service_name
-                )
-
-        # Parse service objects in service group
-
-        for re_match2 in re.finditer(
-            r"service-object ([\S]*)(?:[\s])?(?:(eq|gt|lt|neq|range) ([\S]*)(?: ([\S]*))?)?",
-            re_match.group(0),
-        ):
-
-            if re_match2.group(2):
-
-                if re_match2.group(1) == "range":
-
-                    service_port_first = resolve_default_service(re_match2.group(3))
-                    service_port_last = resolve_default_service(re_match2.group(4))
-
-                    service_name = (
-                        re_match2.group(1)
-                        + "_"
-                        + service_port_first
-                        + "-"
-                        + service_port_last
+                    logger.log(
+                        4,
+                        __name__
+                        + ": service group operator "
+                        + operator
+                        + " not supported",
                     )
 
-                else:
+            elif member_config[0] == "service-object":  ## if service member
 
-                    service_port = resolve_default_service(re_match2.group(3))
+                member_protocol = member_config[1]
 
-                    service_name = re_match2.group(1) + "_" + service_port
+                if member_protocol in [
+                    "tcp",
+                    "tcp-udp",
+                    "udp",
+                ]:  ## if tcp or udp protocol
 
-            else:
+                    ## check operator
 
-                service_name = re_match2.group(1) + "_all"
+                    if operator == "eq":  ## single port
 
-            ### Need to add the ability to parse ICMP services with type and code values in here
+                        if service_name not in data["service_objects"]:
 
-            if re_match2.group(2):
+                            data["service_objects"][service_name] = {}
+                            data["service_objects"][service_name]["description"] = ""
+                            data["service_objects"][service_name][
+                                "dst_port"
+                            ] = resolve_named_service(member_config[2])
+                            data["service_objects"][service_name][
+                                "protocol"
+                            ] = resolve_named_protocol(member_protocol)
+                            data["service_objects"][service_name]["src_port"] = ""
+                            data["service_objects"][service_name]["type"] = "service"
 
-                data["service_objects"][service_name] = {}
+                        ## add service object to the group
 
-                data["service_objects"][service_name]["protocol"] = re_match2.group(1)
+                        data["service_groups"][group_name]["members"].append(
+                            service_name
+                        )
 
-                if re_match2.group(2) == "range":
+                    elif operator == "range":  ## port range
 
-                    data["service_objects"][service_name]["type"] = "range"
+                        data["service_objects"][service_name] = {}
+                        data["service_objects"][service_name]["description"] = ""
+                        data["service_objects"][service_name][
+                            "dst_port_first"
+                        ] = resolve_named_service(member_config[2])
+                        data["service_objects"][service_name][
+                            "dst_port_last"
+                        ] = resolve_named_service(member_config[3])
+                        data["service_objects"][service_name][
+                            "protocol"
+                        ] = resolve_named_protocol(group_protocol)
+                        data["service_objects"][service_name]["src_port_first"] = ""
+                        data["service_objects"][service_name]["src_port_last"] = ""
+                        data["service_objects"][service_name]["type"] = "range"
+
+                        ## add service object to the group
+
+                        data["service_groups"][group_name]["members"].append(
+                            service_name
+                        )
+
+                    else:
+
+                        logger.log(
+                            4,
+                            __name__
+                            + ": service group operator "
+                            + operator
+                            + " not supported",
+                        )
+
+                elif member_protocol == "icmp":  ## if icmp protocol
+
+                    data["service_objects"][service_name] = {}
+                    data["service_objects"][service_name]["description"] = ""
+                    data["service_objects"][service_name]["icmp_code"] = ""
+                    data["service_objects"][service_name]["icmp_type"] = ""
                     data["service_objects"][service_name][
-                        "destination_port_first"
-                    ] = service_port_first
-                    data["service_objects"][service_name][
-                        "destination_port_last"
-                    ] = service_port_last
-
-                else:
-
+                        "protocol"
+                    ] = resolve_named_protocol(member_protocol)
                     data["service_objects"][service_name]["type"] = "service"
-                    data["service_objects"][service_name][
-                        "destination_port"
-                    ] = service_port
 
-            else:
+                    if len(member_config) < 2:
+                        data["service_objects"][service_name][
+                            "icmp_type"
+                        ] = resolve_named_icmp(member_config[2])
+
+                    ## add service object to the group
+
+                    data["service_groups"][group_name]["members"].append(service_name)
+
+                else:  ## else another protocol
+
+                    data["service_objects"][service_name] = {}
+                    data["service_objects"][service_name]["description"] = ""
+                    data["service_objects"][service_name]["dst_port"] = ""
+                    data["service_objects"][service_name][
+                        "protocol"
+                    ] = resolve_named_protocol(member_protocol)
+                    data["service_objects"][service_name]["src_port"] = ""
+                    data["service_objects"][service_name]["type"] = "service"
+
+                    ## add service object to the group
+
+                    data["service_groups"][group_name]["members"].append(service_name)
+
+            elif member_config[0] == "group-object":  ## if group member
+
+                service_group = member[14:]
+
+                ## add group object to the group
+
+                data["service_groups"][group_name]["members"].append(service_group)
+
+    ## parse protocol groups
+
+    for re_match in re.finditer(
+        "object-group protocol (.*)\n(?: .*\n){1,}", src_config
+    ):
+
+        service_groups = str(re_match.group(0)).split("\n")
+
+        group_config = service_groups[0][22:].split(" ")
+
+        group_name = group_config[0]
+
+        data["service_groups"][group_name] = {}
+        data["service_groups"][group_name]["description"] = ""
+        data["service_groups"][group_name]["members"] = []
+        data["service_groups"][group_name]["type"] = "group"
+
+        ## check for description and set start index
+
+        if "description" in service_groups[1]:
+            data["service_groups"][group_name]["description"] = service_groups[1][13:]
+            i = 2
+
+        else:
+            i = 1
+
+        for member in service_groups[i:]:
+
+            member_config = member.lstrip().split(" ")
+
+            if member_config[0] == "protocol-object":  ## if protocol member
+
+                service_name = "protocol_" + str(member_protocol)
 
                 data["service_objects"][service_name] = {}
+                data["service_objects"][service_name]["description"] = ""
+                data["service_objects"][service_name]["dst_port"] = ""
+                data["service_objects"][service_name][
+                    "protocol"
+                ] = resolve_named_protocol(member_protocol)
+                data["service_objects"][service_name]["src_port"] = ""
                 data["service_objects"][service_name]["type"] = "service"
-                data["service_objects"][service_name]["protocol"] = re_match2.group(1)
 
-            if re_match2.group(1) == "icmp":
+                ## add service object to the group
 
-                data["service_objects"][service_name]["icmp_type"] = ""
-                data["service_objects"][service_name]["icmp_code"] = ""
-
-            data["service_groups"][re_match.group(1)]["members"].append(service_name)
-
-        ### Need to parse protocol groups here
+                data["service_groups"][group_name]["members"].append(service_name)
 
     # Parse firewall policies
 
@@ -961,12 +1100,12 @@ def parse(logger, src_config, routing_info=""):
                             data["network_objects"][network_object]["type"] = "host"
                             data["network_objects"][network_object][
                                 "host"
-                            ] = name_object.group(1)
+                            ] = name_object["ip_address"]
 
-                            if name_object.group(2):
+                            if name_object["description"]:
                                 data["network_objects"][network_object][
                                     "description"
-                                ] = name_object.group(2)
+                                ] = name_object["description"]
 
                             else:
                                 data["network_objects"][network_object][
@@ -1020,12 +1159,12 @@ def parse(logger, src_config, routing_info=""):
                                 data["network_objects"][network_object]["type"] = "host"
                                 data["network_objects"][network_object][
                                     "host"
-                                ] = name_object.group(1)
+                                ] = name_object["ip_address"]
 
-                                if name_object.group(2):
+                                if name_object["description"]:
                                     data["network_objects"][network_object][
                                         "description"
-                                    ] = name_object.group(2)
+                                    ] = name_object["description"]
 
                                 else:
                                     data["network_objects"][network_object][
@@ -1061,15 +1200,15 @@ def parse(logger, src_config, routing_info=""):
                                 ] = "network"
                                 data["network_objects"][network_object][
                                     "network"
-                                ] = name_object.group(1)
+                                ] = name_object["ip_address"]
                                 data["network_objects"][network_object][
                                     "mask"
                                 ] = acl_rule[i + 1]
 
-                                if name_object.group(2):
+                                if name_object["description"]:
                                     data["network_objects"][network_object][
                                         "description"
-                                    ] = name_object.group(2)
+                                    ] = name_object["description"]
 
                                 else:
                                     data["network_objects"][network_object][
@@ -1140,12 +1279,12 @@ def parse(logger, src_config, routing_info=""):
                             data["network_objects"][network_object]["type"] = "host"
                             data["network_objects"][network_object][
                                 "host"
-                            ] = name_object.group(1)
+                            ] = name_object["ip_address"]
 
-                            if name_object.group(2):
+                            if name_object["description"]:
                                 data["network_objects"][network_object][
                                     "description"
-                                ] = name_object.group(2)
+                                ] = name_object["description"]
 
                             else:
                                 data["network_objects"][network_object][
@@ -1199,12 +1338,12 @@ def parse(logger, src_config, routing_info=""):
                                 data["network_objects"][network_object]["type"] = "host"
                                 data["network_objects"][network_object][
                                     "host"
-                                ] = name_object.group(1)
+                                ] = name_object["ip_address"]
 
-                                if name_object.group(2):
+                                if name_object["description"]:
                                     data["network_objects"][network_object][
                                         "description"
-                                    ] = name_object.group(2)
+                                    ] = name_object["description"]
 
                                 else:
                                     data["network_objects"][network_object][
@@ -1240,15 +1379,15 @@ def parse(logger, src_config, routing_info=""):
                                 ] = "network"
                                 data["network_objects"][network_object][
                                     "network"
-                                ] = name_object.group(1)
+                                ] = name_object["ip_address"]
                                 data["network_objects"][network_object][
                                     "mask"
                                 ] = acl_rule[i + 1]
 
-                                if name_object.group(2):
+                                if name_object["description"]:
                                     data["network_objects"][network_object][
                                         "description"
-                                    ] = name_object.group(2)
+                                    ] = name_object["description"]
 
                                 else:
                                     data["network_objects"][network_object][
