@@ -179,6 +179,8 @@ def parse(logger, src_config, routing_info=""):
                 icmp = "17"
             elif icmp == "mask-reply":
                 icmp = "18"
+            elif icmp == "traceroute":
+                icmp = "30"
             elif icmp == "conversion-error":
                 icmp = "31"
             elif icmp == "mobile-redirect":
@@ -723,6 +725,8 @@ def parse(logger, src_config, routing_info=""):
 
         for member in service_groups[i:]:
 
+            service_name = ""
+
             member_config = member.lstrip().split(" ")
 
             if member_config[0] == "port-object":  ## if port member
@@ -757,6 +761,8 @@ def parse(logger, src_config, routing_info=""):
                     data["service_groups"][group_name]["members"].append(service_name)
 
                 elif operator == "range":  ## port range
+
+                    service_name = service_name + "-" + member_config[3]
 
                     if service_name not in data["service_objects"]:
 
@@ -793,6 +799,8 @@ def parse(logger, src_config, routing_info=""):
 
                 member_protocol = member_config[1]
 
+                service_name = member_protocol
+
                 if member_protocol in [
                     "tcp",
                     "tcp-udp",
@@ -803,13 +811,15 @@ def parse(logger, src_config, routing_info=""):
 
                     if operator == "eq":  ## single port
 
+                        service_name = service_name + "_" + member_config[3]
+
                         if service_name not in data["service_objects"]:
 
                             data["service_objects"][service_name] = {}
                             data["service_objects"][service_name]["description"] = ""
                             data["service_objects"][service_name][
                                 "dst_port"
-                            ] = resolve_named_service(member_config[2])
+                            ] = resolve_named_service(member_config[3])
                             data["service_objects"][service_name][
                                 "protocol"
                             ] = resolve_named_protocol(member_protocol)
@@ -824,20 +834,30 @@ def parse(logger, src_config, routing_info=""):
 
                     elif operator == "range":  ## port range
 
-                        data["service_objects"][service_name] = {}
-                        data["service_objects"][service_name]["description"] = ""
-                        data["service_objects"][service_name][
-                            "dst_port_first"
-                        ] = resolve_named_service(member_config[2])
-                        data["service_objects"][service_name][
-                            "dst_port_last"
-                        ] = resolve_named_service(member_config[3])
-                        data["service_objects"][service_name][
-                            "protocol"
-                        ] = resolve_named_protocol(group_protocol)
-                        data["service_objects"][service_name]["src_port_first"] = ""
-                        data["service_objects"][service_name]["src_port_last"] = ""
-                        data["service_objects"][service_name]["type"] = "range"
+                        service_name = (
+                            service_name
+                            + "_"
+                            + member_config[3]
+                            + "-"
+                            + member_config[4]
+                        )
+
+                        if service_name not in data["service_objects"]:
+
+                            data["service_objects"][service_name] = {}
+                            data["service_objects"][service_name]["description"] = ""
+                            data["service_objects"][service_name][
+                                "dst_port_first"
+                            ] = resolve_named_service(member_config[3])
+                            data["service_objects"][service_name][
+                                "dst_port_last"
+                            ] = resolve_named_service(member_config[4])
+                            data["service_objects"][service_name][
+                                "protocol"
+                            ] = resolve_named_protocol(group_protocol)
+                            data["service_objects"][service_name]["src_port_first"] = ""
+                            data["service_objects"][service_name]["src_port_last"] = ""
+                            data["service_objects"][service_name]["type"] = "range"
 
                         ## add service object to the group
 
@@ -857,19 +877,25 @@ def parse(logger, src_config, routing_info=""):
 
                 elif member_protocol == "icmp":  ## if icmp protocol
 
-                    data["service_objects"][service_name] = {}
-                    data["service_objects"][service_name]["description"] = ""
-                    data["service_objects"][service_name]["icmp_code"] = ""
-                    data["service_objects"][service_name]["icmp_type"] = ""
-                    data["service_objects"][service_name][
-                        "protocol"
-                    ] = resolve_named_protocol(member_protocol)
-                    data["service_objects"][service_name]["type"] = "service"
+                    if len(member_config) > 2:
+                        icmp_type = member_config[2]
+                        service_name = service_name + "_" + icmp_type
 
-                    if len(member_config) < 2:
+                    else:
+                        icmp_type = ""
+
+                    if service_name not in data["service_objects"]:
+
+                        data["service_objects"][service_name] = {}
+                        data["service_objects"][service_name]["description"] = ""
+                        data["service_objects"][service_name]["icmp_code"] = ""
                         data["service_objects"][service_name][
                             "icmp_type"
-                        ] = resolve_named_icmp(member_config[2])
+                        ] = resolve_named_icmp(icmp_type)
+                        data["service_objects"][service_name][
+                            "protocol"
+                        ] = resolve_named_protocol(member_protocol)
+                        data["service_objects"][service_name]["type"] = "service"
 
                     ## add service object to the group
 
@@ -877,14 +903,16 @@ def parse(logger, src_config, routing_info=""):
 
                 else:  ## else another protocol
 
-                    data["service_objects"][service_name] = {}
-                    data["service_objects"][service_name]["description"] = ""
-                    data["service_objects"][service_name]["dst_port"] = ""
-                    data["service_objects"][service_name][
-                        "protocol"
-                    ] = resolve_named_protocol(member_protocol)
-                    data["service_objects"][service_name]["src_port"] = ""
-                    data["service_objects"][service_name]["type"] = "service"
+                    if service_name not in data["service_objects"]:
+
+                        data["service_objects"][service_name] = {}
+                        data["service_objects"][service_name]["description"] = ""
+                        data["service_objects"][service_name]["dst_port"] = ""
+                        data["service_objects"][service_name][
+                            "protocol"
+                        ] = resolve_named_protocol(member_protocol)
+                        data["service_objects"][service_name]["src_port"] = ""
+                        data["service_objects"][service_name]["type"] = "service"
 
                     ## add service object to the group
 
@@ -930,16 +958,75 @@ def parse(logger, src_config, routing_info=""):
 
             if member_config[0] == "protocol-object":  ## if protocol member
 
-                service_name = "protocol_" + str(member_protocol)
+                member_protocol = member_config[1]
 
-                data["service_objects"][service_name] = {}
-                data["service_objects"][service_name]["description"] = ""
-                data["service_objects"][service_name]["dst_port"] = ""
-                data["service_objects"][service_name][
-                    "protocol"
-                ] = resolve_named_protocol(member_protocol)
-                data["service_objects"][service_name]["src_port"] = ""
-                data["service_objects"][service_name]["type"] = "service"
+                service_name = member_protocol
+
+                if service_name not in data["service_objects"]:
+
+                    data["service_objects"][service_name] = {}
+                    data["service_objects"][service_name]["description"] = ""
+                    data["service_objects"][service_name]["dst_port"] = ""
+                    data["service_objects"][service_name][
+                        "protocol"
+                    ] = resolve_named_protocol(member_protocol)
+                    data["service_objects"][service_name]["src_port"] = ""
+                    data["service_objects"][service_name]["type"] = "service"
+
+                ## add service object to the group
+
+                data["service_groups"][group_name]["members"].append(service_name)
+
+    ## parse icmp-type groups
+
+    for re_match in re.finditer(
+        "object-group icmp-type (.*)\n(?: .*\n){1,}", src_config
+    ):
+
+        service_groups = str(re_match.group(0)).split("\n")
+
+        group_config = service_groups[0][23:].split(" ")
+
+        group_name = group_config[0]
+
+        data["service_groups"][group_name] = {}
+        data["service_groups"][group_name]["description"] = ""
+        data["service_groups"][group_name]["members"] = []
+        data["service_groups"][group_name]["type"] = "group"
+
+        ## check for description and set start index
+
+        if "description" in service_groups[1]:
+            data["service_groups"][group_name]["description"] = service_groups[1][13:]
+            i = 2
+
+        else:
+            i = 1
+
+        for member in service_groups[i:]:
+
+            member_config = member.lstrip().split(" ")
+
+            member_protocol = "icmp"
+
+            if member_config[0] == "icmp-object":  ## if icmp member
+
+                icmp_type = member_config[1]
+
+                service_name = member_protocol + "_" + icmp_type
+
+                if service_name not in data["service_objects"]:
+
+                    data["service_objects"][service_name] = {}
+                    data["service_objects"][service_name]["description"] = ""
+                    data["service_objects"][service_name]["icmp_code"] = ""
+                    data["service_objects"][service_name][
+                        "icmp_type"
+                    ] = resolve_named_icmp(icmp_type)
+                    data["service_objects"][service_name][
+                        "protocol"
+                    ] = resolve_named_protocol(member_protocol)
+                    data["service_objects"][service_name]["type"] = "service"
 
                 ## add service object to the group
 
@@ -1421,6 +1508,120 @@ def parse(logger, src_config, routing_info=""):
                     policy["dst_addresses"].append(dst_address)
 
                     i = i + 2
+
+                ## parse source services
+
+                src_service = {}
+                src_service["name"] = "any"
+                src_service["type"] = "any"
+
+                policy["src_services"].append(src_service)
+
+                ## parse destination services
+
+                if acl_rule[i]:
+
+                    if acl_rule[i] == "object":
+
+                        dst_service = {}
+                        dst_service["name"] = "any"
+                        dst_service["type"] = "any"
+
+                        policy["dst_services"].append(dst_service)
+
+                    elif acl_rule[i] == "object-group":
+
+                        dst_service = {}
+                        dst_service["name"] = "any"
+                        dst_service["type"] = "any"
+
+                        policy["dst_services"].append(dst_service)
+
+                    elif acl_rule[i] == "eq":
+
+                        rule_protocol = policy["protocol"]
+
+                        if rule_protocol in data["service_objects"]:
+
+                            service_name = rule_protocol + "_" + acl_rule[i + 1]
+
+                            if service_name not in data["service_objects"]:
+
+                                data["service_objects"][service_name] = {}
+                                data["service_objects"][service_name][
+                                    "description"
+                                ] = ""
+                                data["service_objects"][service_name][
+                                    "dst_port"
+                                ] = resolve_named_service(acl_rule[i + 1])
+                                data["service_objects"][service_name][
+                                    "protocol"
+                                ] = resolve_named_protocol(rule_protocol)
+                                data["service_objects"][service_name]["src_port"] = ""
+                                data["service_objects"][service_name][
+                                    "type"
+                                ] = "service"
+
+                            dst_service = {}
+                            dst_service["name"] = service_name
+                            dst_service["type"] = "service"
+
+                            policy["dst_services"].append(dst_service)
+
+                        elif rule_protocol in data["service_objects"]:
+
+                            for member in data["service_objects"][rule_protocol][
+                                "members"
+                            ]:
+
+                                if rule_protocol == "ip":
+                                    service_name = "tcp-ucp" + "_" + acl_rule[i + 1]
+
+                                else:
+                                    service_name = rule_protocol + "_" + acl_rule[i + 1]
+
+                                if service_name not in data["service_objects"]:
+
+                                    data["service_objects"][service_name] = {}
+                                    data["service_objects"][service_name][
+                                        "description"
+                                    ] = ""
+                                    data["service_objects"][service_name][
+                                        "dst_port"
+                                    ] = resolve_named_service(acl_rule[i + 1])
+                                    data["service_objects"][service_name][
+                                        "protocol"
+                                    ] = resolve_named_protocol(rule_protocol)
+                                    data["service_objects"][service_name][
+                                        "src_port"
+                                    ] = ""
+                                    data["service_objects"][service_name][
+                                        "type"
+                                    ] = "service"
+
+                                dst_service = {}
+                                dst_service["name"] = service_name
+                                dst_service["type"] = "service"
+
+                                policy["dst_services"].append(dst_service)
+
+                    elif acl_rule[i] == "range":
+
+                        dst_service = {}
+                        dst_service["name"] = "any"
+                        dst_service["type"] = "any"
+
+                        policy["dst_services"].append(dst_service)
+
+                    else:
+
+                        if not policy["dst_services"]:
+
+                            dst_service = {}
+                            dst_service["name"] = "any"
+                            dst_service["type"] = "any"
+
+                            policy["dst_services"].append(dst_service)
 
                 ## check remaining entries for ACL args
 
