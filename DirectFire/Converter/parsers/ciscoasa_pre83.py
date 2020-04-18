@@ -525,7 +525,7 @@ def parse(logger, src_config, routing_info=""):
         route["interface"] = route_config[1]
         route["mask"] = route_config[3]
         route["network"] = ""
-        route["source"] = ""
+        route["source"] = []
         route["type"] = "static"
 
         ## check if network is a name object

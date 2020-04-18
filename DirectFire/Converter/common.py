@@ -133,6 +133,7 @@ def interface_lookup(ip_address, interfaces, routes):
 
                     selected_route = id
                     selected_route_network = route
+
             else:
 
                 selected_route = id
@@ -142,7 +143,10 @@ def interface_lookup(ip_address, interfaces, routes):
 
         selected_route = ""
 
-    if selected_route:
+    ## resolve interface if a route selected
+
+    if str(selected_route):
+
         selected_interface = routes[selected_route]["interface"]
 
     ## return if an interface selected
@@ -154,6 +158,7 @@ def interface_lookup(ip_address, interfaces, routes):
         return ""
 
     ### need to add lookup against supplemental routing info csv
+    ### need to check route source in case a policy route
 
 
 def ipv4_prefix_to_mask(prefix):
