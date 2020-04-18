@@ -14,7 +14,7 @@ except:
 
 # Import settings
 
-import OpenFireVert.settings as settings
+import DirectFire.Converter.settings as settings
 
 
 class logger:
@@ -39,22 +39,22 @@ class logger:
 
         if log_level >= settings.LOG_LEVEL:  # If log level ge log setting continue
 
-            if log_level == 1:
+            if log_level == 1:  ## debug
 
                 logging.debug(message)
 
-            elif log_level == 2:
+            elif log_level == 2:  ## info
 
                 logging.info(message)
 
-            elif log_level == 3:
+            elif log_level == 3:  ## warning
 
                 logging.warning(message)
 
-            elif log_level == 4:
+            elif log_level == 4:  ## error
 
                 logging.error(message)
 
-            elif log_level == 5:
+            elif log_level == 5:  ## critical
 
                 logging.critical(message)

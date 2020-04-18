@@ -6,9 +6,9 @@ import re
 
 # Import common, logging and settings
 
-import OpenFireVert.common as common
-from OpenFireVert.logging import logger
-import OpenFireVert.settings as settings
+import DirectFire.Converter.common as common
+from DirectFire.Converter.logging import logger
+import DirectFire.Converter.settings as settings
 
 # Initialise common functions
 
@@ -404,7 +404,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse system
 
-    logger.log(2, __name__ + ": parse system - not yet supported")
+    logger.log(3, __name__ + ": parse system - not yet supported")
 
     """
     Parse system objects such as hostname, DNS
@@ -501,7 +501,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse zones
 
-    logger.log(2, __name__ + ": parse zones - not yet supported")
+    logger.log(3, __name__ + ": parse zones - not yet supported")
 
     """
     Parse zones

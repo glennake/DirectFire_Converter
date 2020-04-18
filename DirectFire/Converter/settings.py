@@ -1,5 +1,5 @@
 """
-Settings for OpenFireVert
+Settings for DirectFire Converter
 """
 
 

@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
-# Title: OpenFireVert (Open Firewall Converter)
-# Description: OpenFireVert is an open source firewall configuration conversion tool written in Python
+# Title: DirectFire Converter
+# Description: DirectFire is a firewall configuration conversion tool written in Python
 # Author: Glenn Akester (@glennake)
 # Version: 0.0.1
 #
-# OpenFireVert is free software: you can redistribute it and/or
+# DirectFire Converter is free software: you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# OpenFireVert is distributed in the hope that it will be
+# DirectFire Converter is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
@@ -33,9 +33,9 @@ except:
 
 # Import common and settings
 
-import OpenFireVert.common as common
-from OpenFireVert.logging import logger
-import OpenFireVert.settings as settings
+import DirectFire.Converter.common as common
+from DirectFire.Converter.logging import logger
+import DirectFire.Converter.settings as settings
 
 # Get arguments
 
@@ -69,75 +69,87 @@ args = arg_parser.parse_args()
 
 logger = logger(args.source, args.destination)
 
-logger.log(2, "OpenFireVert.main: converter starting")
-logger.log(2, "OpenFireVert.main: source format is " + args.source)
+logger.log(2, "DirectFire.Converter.main: converter starting")
+logger.log(2, "DirectFire.Converter.main: source format is " + args.source)
 
 
 def parse(src_format, src_config, routing_info=""):
 
-    logger.log(2, "OpenFireVert.parse: loading parser module for " + src_format)
+    logger.log(2, "DirectFire.Converter.parse: loading parser module for " + src_format)
 
     if src_format == "ciscoasa_pre83":  ## Cisco ASA pre 8.3
-        from OpenFireVert.parsers.ciscoasa_pre83 import parse
+        from DirectFire.Converter.parsers.ciscoasa_pre83 import parse
 
     elif src_format == "fortigate":  ## Fortinet FortiGate
-        from OpenFireVert.parsers.fortigate import parse
+        from DirectFire.Converter.parsers.fortigate import parse
 
     elif src_format == "junipersrx":  ## Juniper SRX (JunOS)
-        from OpenFireVert.parsers.junipersrx import parse
+        from DirectFire.Converter.parsers.junipersrx import parse
 
     elif src_format == "watchguard":  ## WatchGuard
-        from OpenFireVert.parsers.watchguard import parse
+        from DirectFire.Converter.parsers.watchguard import parse
 
     else:
         logger.log(
-            2, "OpenFireVert.parse: failed to load parser module for " + src_format
+            2,
+            "DirectFire.Converter.parse: failed to load parser module for "
+            + src_format,
         )
 
         print(f"{Fore.RED}Error: failed to load parser module.{Style.RESET_ALL}")
 
         exit()
 
-    logger.log(2, "OpenFireVert.parse: loaded parser module for " + src_format)
+    logger.log(2, "DirectFire.Converter.parse: loaded parser module for " + src_format)
 
-    logger.log(2, "OpenFireVert.parse: starting parse of source configuration")
+    logger.log(2, "DirectFire.Converter.parse: starting parse of source configuration")
 
     parsed_data = parse(logger, src_config, routing_info)
 
-    logger.log(2, "OpenFireVert.parse: completed parse of source configuration")
+    logger.log(2, "DirectFire.Converter.parse: completed parse of source configuration")
 
     return parsed_data
 
 
 def generate(dst_format, parsed_data):
 
-    logger.log(2, "OpenFireVert.generate: loading generator module for " + dst_format)
+    logger.log(
+        2, "DirectFire.Converter.generate: loading generator module for " + dst_format
+    )
 
     if dst_format == "ciscoasa":  ## Cisco ASA post 8.3
-        from OpenFireVert.generators.ciscoasa import generate
+        from DirectFire.Converter.generators.ciscoasa import generate
 
     elif dst_format == "data":  ## JSON Data
-        from OpenFireVert.generators.data import generate
+        from DirectFire.Converter.generators.data import generate
 
     elif dst_format == "fortigate":  ## Fortinet FortiGate
-        from OpenFireVert.generators.fortigate import generate
+        from DirectFire.Converter.generators.fortigate import generate
 
     else:
         logger.log(
-            2, "OpenFireVert.parse: failed to load generator module for " + dst_format
+            2,
+            "DirectFire.Converter.parse: failed to load generator module for "
+            + dst_format,
         )
 
         print(f"{Fore.RED}Error: failed to load generator module.{Style.RESET_ALL}")
 
         exit()
 
-    logger.log(2, "OpenFireVert.generate: loaded generator module for " + dst_format)
+    logger.log(
+        2, "DirectFire.Converter.generate: loaded generator module for " + dst_format
+    )
 
-    logger.log(2, "OpenFireVert.generate: starting generation of destination output")
+    logger.log(
+        2, "DirectFire.Converter.generate: starting generation of destination output"
+    )
 
     dst_config = generate(logger, parsed_data)
 
-    logger.log(2, "OpenFireVert.generate: completed generation of destination output")
+    logger.log(
+        2, "DirectFire.Converter.generate: completed generation of destination output"
+    )
 
     return dst_config
 
@@ -146,7 +158,9 @@ def main(src_format, dst_format, routing_info=""):
 
     # Load source configuration file
 
-    logger.log(2, "OpenFireVert.main: loading source configuration from " + args.config)
+    logger.log(
+        2, "DirectFire.Converter.main: loading source configuration from " + args.config
+    )
 
     try:
 
@@ -157,7 +171,7 @@ def main(src_format, dst_format, routing_info=""):
 
         logger.log(
             4,
-            "OpenFireVert.main: source file either not found or not readable "
+            "DirectFire.Converter.main: source file either not found or not readable "
             + args.config,
         )
 
@@ -172,13 +186,13 @@ def main(src_format, dst_format, routing_info=""):
         try:
 
             with open(args.routing) as routing_file:
-                routing_info = config_file.read()
+                routing_info = routing_file.read()
 
         except:
 
             logger.log(
                 4,
-                "OpenFireVert.main: routing file either not found or not readable "
+                "DirectFire.Converter.main: routing file either not found or not readable "
                 + args.config,
             )
 
@@ -190,17 +204,17 @@ def main(src_format, dst_format, routing_info=""):
 
     # Run configuration parser
 
-    logger.log(2, "OpenFireVert.main: running configuration parser")
+    logger.log(2, "DirectFire.Converter.main: running configuration parser")
 
     parsed_data = parse(
         src_format=src_format, src_config=src_config, routing_info=routing_info
     )
 
-    logger.log(2, "OpenFireVert.main: configuration parser finished")
+    logger.log(2, "DirectFire.Converter.main: configuration parser finished")
 
     # Output
 
-    logger.log(2, "OpenFireVert.main: running configuration generator")
+    logger.log(2, "DirectFire.Converter.main: running configuration generator")
 
     dst_config = generate(dst_format=dst_format, parsed_data=parsed_data)
 
@@ -209,9 +223,9 @@ def main(src_format, dst_format, routing_info=""):
 
     ### add support for output to file
 
-    logger.log(2, "OpenFireVert.main: configuration generator finished")
+    logger.log(2, "DirectFire.Converter.main: configuration generator finished")
 
-    logger.log(2, "OpenFireVert.main: converter exiting")
+    logger.log(2, "DirectFire.Converter.main: converter exiting")
 
 
 if __name__ == "__main__":

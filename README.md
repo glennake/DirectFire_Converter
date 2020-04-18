@@ -1,7 +1,7 @@
-# OpenFireVert (Open Firewall Converter)
+# DirectFire Converter
 
-OpenFireVert is an open source firewall configuration conversion tool written in Python.
-Support for any firewall type will be added based on requests, demand and developer availability.
+DirectFire Converter is a firewall configuration conversion tool written in Python.
+Support for any firewall type will be considered based on request, demand and developer availability.
 
 This tool generates configuration for supported elements only, that are typically input through CLI or "merged" with a full or running configuration. It does not generate full configuration files.
 
@@ -15,12 +15,12 @@ This tool will attempt to convert configurations from one firewall type to anoth
 
 ## Getting Started
 
-https://github.com/glennake/OpenFireVert/wiki/Getting-Started
+https://github.com/glennake/DirectFire_Converter/wiki/Getting-Started
 
 ## Changelog
 
-https://github.com/glennake/OpenFireVert/blob/master/CHANGELOG.md
+https://github.com/glennake/DirectFire_Converter/blob/master/CHANGELOG.md
 
 ## Full Documentation
 
-https://github.com/glennake/OpenFireVert/wiki
+https://github.com/glennake/DirectFire_Converter/wiki
