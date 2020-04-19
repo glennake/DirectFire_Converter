@@ -37,8 +37,8 @@ def parse(logger, src_config, routing_info=""):
     data["interfaces"] = {}
     data["zones"] = {}
 
-    data["routes"] = {}
-    data["routes6"] = {}
+    data["routes"] = []
+    data["routes6"] = []
 
     data["network_objects"] = {}
     data["network6_objects"] = {}
@@ -48,14 +48,15 @@ def parse(logger, src_config, routing_info=""):
     data["service_objects"] = {}
     data["service_groups"] = {}
 
-    data["policies"] = {}
+    data["policies"] = []
 
-    data["nat"] = {}
+    data["nat"] = []
 
-    route_id = 1
-    route6_id = 1
-    policy_id = 1
-    nat_id = 1
+    # Parser specific variables
+
+    """
+    Parser specific variables
+    """
 
     # Define default service objects
 
@@ -1481,11 +1482,11 @@ def parse(logger, src_config, routing_info=""):
         route_prefix = route_match.group(2)
         route_gateway = route_match.group(3)
 
-        data["routes"][route_id] = {}
+        route = {}
 
-        data["routes"][route_id]["network"] = route_network
-        data["routes"][route_id]["mask"] = ipv4_prefix_to_mask(route_prefix)
-        data["routes"][route_id]["gateway"] = route_gateway
+        route["network"] = route_network
+        route["mask"] = ipv4_prefix_to_mask(route_prefix)
+        route["gateway"] = route_gateway
 
         re_match = re.search(
             "set routing-options static route "
@@ -1496,19 +1497,17 @@ def parse(logger, src_config, routing_info=""):
         )
 
         if re_match:
-            data["routes"][route_id]["distance"] = re_match.group(1)
+            route["distance"] = re_match.group(1)
         else:
-            data["routes"][route_id][
-                "distance"
-            ] = "5"  ## default admin distance for static routes is 5
+            route["distance"] = "5"  ## default admin distance for static routes is 5
 
-        data["routes"][route_id]["type"] = "static"
+        route["type"] = "static"
 
-        data["routes"][route_id]["interface"] = interface_lookup(
+        route["interface"] = interface_lookup(
             route_gateway, data["interfaces"], data["routes"]
         )
 
-        route_id += 1
+        data["routes"].append(route)
 
     # Parse IPv4 network objects
 
@@ -1684,7 +1683,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv6 network groups
 
-    logger.log(2, __name__ + ": parse IPv6 network groups - not yet supported")
+    logger.log(3, __name__ + ": parse IPv6 network groups - not yet supported")
 
     """
     Parse IPv6 network groups
@@ -1692,7 +1691,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service objects
 
-    logger.log(2, __name__ + ": parse service objects - not yet supported")
+    logger.log(3, __name__ + ": parse service objects - not yet supported")
 
     """
     Parse service objects
@@ -1700,7 +1699,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service groups
 
-    logger.log(2, __name__ + ": parse service groups - not yet supported")
+    logger.log(3, __name__ + ": parse service groups - not yet supported")
 
     """
     Parse service groups
@@ -1708,7 +1707,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse firewall policies - not yet supported")
+    logger.log(3, __name__ + ": parse firewall policies - not yet supported")
 
     """
     Parse firewall policies
@@ -1720,7 +1719,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse NAT
 
-    logger.log(2, __name__ + ": parse NAT - not yet supported")
+    logger.log(3, __name__ + ": parse NAT - not yet supported")
 
     """
     Parse NAT policies

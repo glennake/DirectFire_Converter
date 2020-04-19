@@ -35,8 +35,8 @@ def parse(logger, src_config, routing_info=""):
     data["interfaces"] = {}
     data["zones"] = {}
 
-    data["routes"] = {}
-    data["routes6"] = {}
+    data["routes"] = []
+    data["routes6"] = []
 
     data["network_objects"] = {}
     data["network6_objects"] = {}
@@ -46,14 +46,15 @@ def parse(logger, src_config, routing_info=""):
     data["service_objects"] = {}
     data["service_groups"] = {}
 
-    data["policies"] = {}
+    data["policies"] = []
 
-    data["nat"] = {}
+    data["nat"] = []
 
-    route_id = 1
-    route6_id = 1
-    policy_id = 1
-    nat_id = 1
+    # Parser specific variables
+
+    """
+    Parser specific variables
+    """
 
     # Parse system
 
@@ -89,11 +90,13 @@ def parse(logger, src_config, routing_info=""):
         "    edit [0-9]{1,}\n(?:.*?)\n    next", routes_block, re.DOTALL
     ):
 
-        route = route_match.group(0)
+        route_config = route_match.group(0)
 
-        if "set virtual-wan-link enable" not in route:  ### need to add vwl support
+        if (
+            "set virtual-wan-link enable" not in route_config
+        ):  ### need to add vwl support
 
-            data["routes"][route_id] = {}
+            route = {}
 
             re_match = re.search(
                 "set dst ("
@@ -101,27 +104,30 @@ def parse(logger, src_config, routing_info=""):
                 + ") ("
                 + common.common_regex.ipv4_mask
                 + ")\n",
-                route,
+                route_config,
             )
 
-            data["routes"][route_id]["network"] = re_match.group(1)
-            data["routes"][route_id]["mask"] = re_match.group(2)
+            route["network"] = re_match.group(1)
+            route["mask"] = re_match.group(2)
 
             re_match = re.search(
                 "set gateway ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})\n",
-                route,
+                route_config,
             )
-            data["routes"][route_id]["gateway"] = re_match.group(1)
 
-            re_match = re.search('set device "?(.*?)"?\n', route)
-            data["routes"][route_id]["interface"] = re_match.group(1)
+            route["gateway"] = re_match.group(1)
 
-            re_match = re.search("set distance ([0-9]{1,})\n", route)
-            data["routes"][route_id]["distance"] = re_match.group(1)
+            re_match = re.search('set device "?(.*?)"?\n', route_config)
+            route["interface"] = re_match.group(1)
 
-            data["routes"][route_id]["type"] = "static"
+            re_match = re.search("set distance ([0-9]{1,})\n", route_config)
+            route["distance"] = re_match.group(1)
 
-            route_id += 1
+            route["source"] = []
+
+            route["type"] = "static"
+
+            data["routes"].append(route)
 
     # Parse IPv4 network objects
 
@@ -476,7 +482,7 @@ def parse(logger, src_config, routing_info=""):
     logger.log(2, __name__ + ": parse IPv6 network groups")
 
     re_match = re.search(
-        "\nconfig firewall addrgrp6\n(?:.*?)\nend", src_config, re.DOTALL
+        "\nconfig firewall addrgrp6\n(?:.*?)(?:\n)?end", src_config, re.DOTALL
     )
 
     network6_groups_block = re_match.group(0).strip()

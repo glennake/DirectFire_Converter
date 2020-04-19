@@ -36,8 +36,8 @@ def parse(logger, src_config, routing_info=""):
     data["interfaces"] = {}
     data["zones"] = {}
 
-    data["routes"] = {}
-    data["routes6"] = {}
+    data["routes"] = []
+    data["routes6"] = []
 
     data["network_objects"] = {}
     data["network6_objects"] = {}
@@ -47,14 +47,15 @@ def parse(logger, src_config, routing_info=""):
     data["service_objects"] = {}
     data["service_groups"] = {}
 
-    data["policies"] = {}
+    data["policies"] = []
 
-    data["nat"] = {}
+    data["nat"] = []
 
-    route_id = 1
-    route6_id = 1
-    policy_id = 1
-    nat_id = 1
+    # Parser specific variables
+
+    """
+    Parser specific variables
+    """
 
     # Parse system
 

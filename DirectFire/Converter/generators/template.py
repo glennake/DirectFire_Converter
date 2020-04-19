@@ -27,6 +27,12 @@ def generate(logger, parsed_data):
 
     dst_config = []
 
+    # Generator specific variables
+
+    """
+    Generator specific variables
+    """
+
     # Generate system
 
     logger.log(2, __name__ + ": generate system")
@@ -93,7 +99,7 @@ def generate(logger, parsed_data):
 
     # Generate policies
 
-    logger.log(2, __name__ + ": generate policies - not yet supported")
+    logger.log(2, __name__ + ": generate policies")
 
     """
     Generate firewall policies
@@ -101,7 +107,7 @@ def generate(logger, parsed_data):
 
     # Generate NAT
 
-    logger.log(2, __name__ + ": generate NAT ")
+    logger.log(2, __name__ + ": generate NAT")
 
     """
     Generate NAT policies

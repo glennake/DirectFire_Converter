@@ -27,6 +27,8 @@ def generate(logger, parsed_data):
 
     dst_config = []
 
+    # Generator specific variables
+
     cfglvl1 = "  "
     cfglvl2 = "    "
     cfglvl3 = "      "
@@ -115,7 +117,7 @@ def generate(logger, parsed_data):
 
     # Generate zones
 
-    logger.log(2, __name__ + ": generate zones")
+    logger.log(3, __name__ + ": generate zones - not yet supported")
 
     """
     Generate zones
@@ -127,7 +129,7 @@ def generate(logger, parsed_data):
 
     dst_config.append("config router static")
 
-    for route_id, attributes in parsed_data["routes"].items():
+    for route_id, attributes in enumerate(parsed_data["routes"]):
 
         dst_config.append(cfglvl1 + "edit " + str(route_id))
         dst_config.append(
@@ -295,14 +297,14 @@ def generate(logger, parsed_data):
 
     # Generate policies
 
-    logger.log(3, __name__ + ": generate policies not yet implemented")
+    logger.log(3, __name__ + ": generate policies - not yet supported")
 
     # dst_config.append("config firewall policy")
     # dst_config.append("end")
 
     # Generate NAT
 
-    logger.log(2, __name__ + ": generate NAT not yet implemented")
+    logger.log(3, __name__ + ": generate NAT - not yet supported")
 
     # Return generated config
 

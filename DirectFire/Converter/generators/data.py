@@ -25,6 +25,12 @@ def generate(logger, parsed_data):
 
     dst_config = []
 
+    # Generator specific variables
+
+    """
+    Generator specific variables
+    """
+
     # Generate data
 
     logger.log(2, __name__ + ": generate data")

@@ -20,7 +20,7 @@ def parse(logger, src_config, routing_info=""):
 
     logger.log(2, __name__ + ": parser module started")
 
-    # Initialise XML element tree
+    # Initialise data
 
     src_config_xml = ET.ElementTree(ET.fromstring(src_config))
 
@@ -33,8 +33,8 @@ def parse(logger, src_config, routing_info=""):
     data["interfaces"] = {}
     data["zones"] = {}
 
-    data["routes"] = {}
-    data["routes6"] = {}
+    data["routes"] = []
+    data["routes6"] = []
 
     data["network_objects"] = {}
     data["network6_objects"] = {}
@@ -44,14 +44,15 @@ def parse(logger, src_config, routing_info=""):
     data["service_objects"] = {}
     data["service_groups"] = {}
 
-    data["policies"] = {}
+    data["policies"] = []
 
-    data["nat"] = {}
+    data["nat"] = []
 
-    route_id = 1
-    route6_id = 1
-    policy_id = 1
-    nat_id = 1
+    # Parser specific variables
+
+    """
+    Parser specific variables
+    """
 
     # Parse system
 
@@ -223,33 +224,31 @@ def parse(logger, src_config, routing_info=""):
 
     src_routes = src_config_xml.findall("./system-parameters/route/route-entry")
 
-    routes_key = 1
+    for interface_route_config in interface_routes:
 
-    for interface_route in interface_routes:
+        route = {}
+        route["network"] = "0.0.0.0"
+        route["mask"] = "0.0.0.0"
+        route["gateway"] = interface_route_config["gateway"]
+        route["interface"] = interface_route_config["interface"]
+        route["distance"] = "1"
 
-        data["routes"][routes_key] = {}
-        data["routes"][routes_key]["network"] = "0.0.0.0"
-        data["routes"][routes_key]["mask"] = "0.0.0.0"
-        data["routes"][routes_key]["gateway"] = interface_route["gateway"]
-        data["routes"][routes_key]["interface"] = interface_route["interface"]
-        data["routes"][routes_key]["distance"] = "1"
+        data["routes"].append(route)
 
-        routes_key += 1
+    for route_config in src_routes:
 
-    for route in src_routes:
+        route_gateway = route_config.find("gateway-ip").text
 
-        route_gateway = route.find("gateway-ip").text
-
-        data["routes"][routes_key] = {}
-        data["routes"][routes_key]["network"] = route.find("dest-address").text
-        data["routes"][routes_key]["mask"] = route.find("mask").text
-        data["routes"][routes_key]["gateway"] = route_gateway
-        data["routes"][routes_key]["interface"] = interface_lookup(
+        route = {}
+        route["network"] = route_config.find("dest-address").text
+        route["mask"] = route_config.find("mask").text
+        route["gateway"] = route_gateway
+        route["interface"] = interface_lookup(
             route_gateway, data["interfaces"], data["routes"]
         )
-        data["routes"][routes_key]["distance"] = route.find("metric").text
+        route["distance"] = route_config.find("metric").text
 
-        routes_key += 1
+        data["routes"].append(route)
 
     # Parse network groups
 
@@ -411,65 +410,94 @@ def parse(logger, src_config, routing_info=""):
 
     src_policies = src_config_xml.findall("./policy-list/policy")
 
-    for policy in src_policies:
+    for policy_config in src_policies:
 
-        data["policies"][policy_id] = {}
+        policy = {}
 
-        data["policies"][policy_id]["action"] = ""
-        data["policies"][policy_id]["description"] = policy.find("description").text
-        data["policies"][policy_id]["dst_addresses"] = []
-        data["policies"][policy_id]["dst_interfaces"] = []
-        data["policies"][policy_id]["dst_services"] = []
-        data["policies"][policy_id]["enabled"] = (
-            False if policy.find("enable").text == "0" else True
-        )
-        data["policies"][policy_id]["id"] = policy_id
-        data["policies"][policy_id]["logging"] = (
-            False if policy.find("log").text == "0" else True
-        )
-        data["policies"][policy_id]["name"] = policy.find("name").text
-        data["policies"][policy_id][
-            "nat"
-        ] = ""  ### many values here - nat, global-1to1-nat, global-dnat
-        data["policies"][policy_id]["policy_set"] = ""
-        data["policies"][policy_id]["protocol"] = "any"
-        data["policies"][policy_id]["schedule"] = policy.find("schedule").text
-        data["policies"][policy_id]["src_addresses"] = []
-        data["policies"][policy_id]["src_interfaces"] = []
-        data["policies"][policy_id]["src_services"] = ["any"]
-        data["policies"][policy_id]["type"] = "policy"
-        data["policies"][policy_id]["users_excluded"] = []
-        data["policies"][policy_id]["users_included"] = []
+        policy["action"] = ""
+        policy["description"] = policy_config.find("description").text
+        policy["dst_addresses"] = []
+        policy["dst_interfaces"] = []
+        policy["dst_services"] = []
+        policy["enabled"] = False if policy_config.find("enable").text == "0" else True
+        policy["logging"] = False if policy_config.find("log").text == "0" else True
+        policy["name"] = policy_config.find("name").text
+        policy["nat"] = ""  ### many values here - nat, global-1to1-nat, global-dnat
+        policy["policy_set"] = ""
+        policy["protocol"] = "any"
+        policy["schedule"] = policy_config.find("schedule").text
+        policy["src_addresses"] = []
+        policy["src_interfaces"] = []
+        policy["src_services"] = ["any"]
+        policy["type"] = "policy"
+        policy["users_excluded"] = []
+        policy["users_included"] = []
 
         ## find desination addresses
 
-        for dst_alias in policy.find("to-alias-list").findall("alias"):
-            if dst_alias.text == "Any":
-                data["policies"][policy_id]["dst_addresses"].append("any")
+        for dst_alias_name in policy_config.find("to-alias-list").findall("alias"):
+
+            if dst_alias_name.text == "Any":
+
+                dst_address = {}
+                dst_address["name"] = "any"
+                dst_address["type"] = "any"
+
+                policy["dst_addresses"].append(dst_address)
+
             else:
-                data["policies"][policy_id]["dst_addresses"].append(dst_alias.text)
+
+                dst_address = {}
+                dst_address["name"] = dst_alias_name.text
+                dst_address["type"] = "network"  ## need to check if a group
+
+                policy["dst_addresses"].append(dst_address)
 
         ## find desination services
 
-        for dst_service in policy.findall("service"):
-            if dst_service.text == "Any":
-                data["policies"][policy_id]["dst_services"].append("any")
+        for dst_service_name in policy_config.findall("service"):
+
+            if dst_service_name.text == "Any":
+
+                dst_service = {}
+                dst_service["name"] = "any"
+                dst_service["type"] = "any"
+
+                policy["dst_services"].append(dst_service)
+
             else:
-                data["policies"][policy_id]["dst_services"].append(dst_service.text)
+
+                dst_service = {}
+                dst_service["name"] = dst_service_name.text
+                dst_service["type"] = "network"  ## need to check if a group
+
+                policy["dst_services"].append(dst_service)
 
         ## find source addresses
 
-        for src_alias in policy.find("from-alias-list").findall("alias"):
-            if src_alias.text == "Any":
-                data["policies"][policy_id]["src_addresses"].append("any")
+        for src_alias_name in policy_config.find("from-alias-list").findall("alias"):
+
+            if src_alias_name.text == "Any":
+
+                src_address = {}
+                src_address["name"] = "any"
+                src_address["type"] = "any"
+
+                policy["src_addresses"].append(src_address)
+
             else:
-                data["policies"][policy_id]["src_addresses"].append(src_alias.text)
+
+                src_address = {}
+                src_address["name"] = src_alias_name.text
+                src_address["type"] = "network"  ## need to check if a group
+
+                policy["src_addresses"].append(src_address)
 
         ### need to lookup interface for destination alias
 
         ### need to lookup interface for source alias
 
-        policy_id += 1
+        data["policies"].append(policy)
 
     # Parse NAT
 

@@ -51,10 +51,7 @@ def parse(logger, src_config, routing_info=""):
 
     data["nat"] = []
 
-    route_id = 1
-    route6_id = 1
-    policy_id = 1
-    nat_id = 1
+    # Parser specific variables
 
     names = {}
 
