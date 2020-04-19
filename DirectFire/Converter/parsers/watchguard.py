@@ -349,7 +349,7 @@ def parse(logger, src_config, routing_info=""):
                     data["service_objects"][mbr_name] = {}
                     data["service_objects"][mbr_name]["type"] = "service"
                     data["service_objects"][mbr_name]["protocol"] = mbr_protocol
-                    data["service_objects"][mbr_name]["destination_port"] = mbr_port
+                    data["service_objects"][mbr_name]["dst_port"] = mbr_port
                     data["service_objects"][mbr_name]["description"] = ""
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)
@@ -370,12 +370,8 @@ def parse(logger, src_config, routing_info=""):
                     data["service_objects"][mbr_name] = {}
                     data["service_objects"][mbr_name]["type"] = "range"
                     data["service_objects"][mbr_name]["protocol"] = mbr_protocol
-                    data["service_objects"][mbr_name][
-                        "destination_port_first"
-                    ] = mbr_port_first
-                    data["service_objects"][mbr_name][
-                        "destination_port_last"
-                    ] = mbr_port_last
+                    data["service_objects"][mbr_name]["dst_port_first"] = mbr_port_first
+                    data["service_objects"][mbr_name]["dst_port_last"] = mbr_port_last
                     data["service_objects"][mbr_name]["description"] = ""
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)
@@ -384,8 +380,8 @@ def parse(logger, src_config, routing_info=""):
 
                 if mbr_type == "1":  # single type / code
 
-                    mbr_icmp_type = member.find("icmp-type").text
-                    mbr_icmp_code = member.find("icmp-code").text
+                    mbr_icmp_type = member.find("icmp_type").text
+                    mbr_icmp_code = member.find("icmp_code").text
                     mbr_name = (
                         "svc_"
                         + mbr_protocol
@@ -398,8 +394,8 @@ def parse(logger, src_config, routing_info=""):
                     data["service_objects"][mbr_name] = {}
                     data["service_objects"][mbr_name]["type"] = "service"
                     data["service_objects"][mbr_name]["protocol"] = mbr_protocol
-                    data["service_objects"][mbr_name]["icmp-type"] = mbr_icmp_type
-                    data["service_objects"][mbr_name]["icmp-code"] = mbr_icmp_code
+                    data["service_objects"][mbr_name]["icmp_type"] = mbr_icmp_type
+                    data["service_objects"][mbr_name]["icmp_code"] = mbr_icmp_code
                     data["service_objects"][mbr_name]["description"] = ""
 
                     data["service_groups"][grp_name]["members"].append(mbr_name)

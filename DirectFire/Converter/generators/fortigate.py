@@ -214,27 +214,41 @@ def generate(logger, parsed_data):
 
         dst_config.append('  edit "' + service + '"')
 
+        print(service)
+
         if attributes["type"] == "service":
 
             if attributes["protocol"] in ["1", "icmp", "Icmp", "ICMP"]:
 
                 dst_config.append(cfglvl2 + "set protocol ICMP")
-                dst_config.append(cfglvl2 + "set icmptype " + attributes["icmp-type"])
-                dst_config.append(cfglvl2 + "set icmpcode " + attributes["icmp-code"])
+
+                if attributes["icmp_type"]:
+                    dst_config.append(
+                        cfglvl2 + "set icmptype " + attributes["icmp_type"]
+                    )
+
+                if attributes["icmp_code"]:
+                    dst_config.append(
+                        cfglvl2 + "set icmpcode " + attributes["icmp_code"]
+                    )
 
             elif attributes["protocol"] in ["6", "tcp", "Tcp", "TCP"]:
 
                 dst_config.append(cfglvl2 + "set protocol TCP/UDP/SCTP")
-                dst_config.append(
-                    cfglvl2 + "set tcp-portrange " + attributes["destination_port"]
-                )
+
+                if attributes["dst_port"]:
+                    dst_config.append(
+                        cfglvl2 + "set tcp-portrange " + attributes["dst_port"]
+                    )
 
             elif attributes["protocol"] in ["17", "udp", "Udp", "UDP"]:
 
                 dst_config.append(cfglvl2 + "set protocol TCP/UDP/SCTP")
-                dst_config.append(
-                    cfglvl2 + "set udp-portrange " + attributes["destination_port"]
-                )
+
+                if attributes["dst_port"]:
+                    dst_config.append(
+                        cfglvl2 + "set udp-portrange " + attributes["dst_port"]
+                    )
 
             else:
 
@@ -251,9 +265,9 @@ def generate(logger, parsed_data):
                 dst_config.append(
                     cfglvl2
                     + "set tcp-portrange "
-                    + attributes["destination_port_first"]
+                    + attributes["dst_port_first"]
                     + "-"
-                    + attributes["destination_port_last"]
+                    + attributes["dst_port_last"]
                 )
 
             elif attributes["protocol"] in ["17", "udp", "Udp", "UDP"]:
@@ -262,9 +276,9 @@ def generate(logger, parsed_data):
                 dst_config.append(
                     cfglvl2
                     + "set udp-portrange "
-                    + attributes["destination_port_first"]
+                    + attributes["dst_port_first"]
                     + "-"
-                    + attributes["destination_port_last"]
+                    + attributes["dst_port_last"]
                 )
 
         dst_config.append(cfglvl1 + "next")
@@ -299,8 +313,42 @@ def generate(logger, parsed_data):
 
     logger.log(3, __name__ + ": generate policies - not yet supported")
 
-    # dst_config.append("config firewall policy")
-    # dst_config.append("end")
+    dst_config.append("config firewall policy")
+
+    for policy_id, attributes in enumerate(parsed_data["policies"]):
+
+        dst_config.append(cfglvl1 + "edit " + str(policy_id))
+
+        dst_config.append(
+            cfglvl2
+            + "set srcintf "
+            + " ".join(list(map(str, attributes["src_interfaces"])))
+        )
+
+        dst_config.append(
+            cfglvl2
+            + "set dstintf "
+            + " ".join(list(map(str, attributes["dst_interfaces"])))
+        )
+
+        # dst_config.append(
+        #     cfglvl2
+        #     + "set srcaddr "
+        #     + " ".join(list(map(str, attributes["src_addresses"])))
+        # )
+
+        # dst_config.append(
+        #     cfglvl2
+        #     + "set dstaddr "
+        #     + " ".join(list(map(str, attributes["dst_addresses"])))
+        # )
+
+        if attributes["description"]:
+            dst_config.append(cfglvl2 + "set description " + attributes["description"])
+
+        dst_config.append(cfglvl1 + "next")
+
+    dst_config.append("end")
 
     # Generate NAT
 
