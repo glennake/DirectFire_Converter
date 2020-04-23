@@ -46,7 +46,7 @@ arg_parser.add_argument("-c", "--config", help="/full/path/to/config", required=
 arg_parser.add_argument(
     "-s",
     "--source",
-    choices=["ciscoasa_pre83", "fortigate", "junipersrx", "watchguard"],
+    choices=["ciscoasa", "ciscoasa_pre83", "fortigate", "junipersrx", "watchguard"],
     help="source format",
     required=True,
 )
@@ -77,7 +77,10 @@ def parse(src_format, src_config, routing_info=""):
 
     logger.log(2, "DirectFire.Converter.parse: loading parser module for " + src_format)
 
-    if src_format == "ciscoasa_pre83":  ## Cisco ASA pre 8.3
+    if src_format == "ciscoasa":  ## Cisco ASA
+        from DirectFire.Converter.parsers.ciscoasa import parse
+
+    elif src_format == "ciscoasa_pre83":  ## Cisco ASA pre 8.3
         from DirectFire.Converter.parsers.ciscoasa_pre83 import parse
 
     elif src_format == "fortigate":  ## Fortinet FortiGate
