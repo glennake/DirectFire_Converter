@@ -214,8 +214,6 @@ def generate(logger, parsed_data):
 
         dst_config.append('  edit "' + service + '"')
 
-        print(service)
-
         if attributes["type"] == "service":
 
             if attributes["protocol"] in ["1", "icmp", "Icmp", "ICMP"]:

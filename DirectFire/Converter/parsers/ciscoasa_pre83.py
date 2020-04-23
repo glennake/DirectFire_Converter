@@ -690,8 +690,6 @@ def parse(logger, src_config, routing_info=""):
 
     logger.log(2, __name__ + ": parse service groups")
 
-    ### need to parse object-group icmp-type
-
     ## parse service groups
 
     for re_match in re.finditer("object-group service (.*)\n(?: .*\n){1,}", src_config):
@@ -701,6 +699,8 @@ def parse(logger, src_config, routing_info=""):
         group_config = service_groups[0][21:].split(" ")
 
         group_name = group_config[0]
+
+        operator = ""
 
         if len(group_config) > 1:
             group_protocol = group_config[1]
@@ -804,6 +804,8 @@ def parse(logger, src_config, routing_info=""):
                     "tcp-udp",
                     "udp",
                 ]:  ## if tcp or udp protocol
+
+                    operator = member_config[2]
 
                     ## check operator
 
@@ -1707,13 +1709,13 @@ def parse(logger, src_config, routing_info=""):
                     ip_address, data["interfaces"], data["routes"]
                 )
 
-            ## if we have a src_interface back from lookup then add to policy
+                ## if we have a src_interface back from lookup then add to policy
 
-            if src_interface:
+                if src_interface:
 
-                if src_interface not in policy["src_interfaces"]:
+                    if src_interface not in policy["src_interfaces"]:
 
-                    data["policies"][id]["src_interfaces"].append(src_interface)
+                        data["policies"][id]["src_interfaces"].append(src_interface)
 
         ## check all destination interfaces in dst_interfaces
 
@@ -1764,13 +1766,13 @@ def parse(logger, src_config, routing_info=""):
                     ip_address, data["interfaces"], data["routes"]
                 )
 
-            ## if we have a dst_interface back from lookup then add to policy
+                ## if we have a dst_interface back from lookup then add to policy
 
-            if dst_interface:
+                if dst_interface:
 
-                if dst_interface not in policy["dst_interfaces"]:
+                    if dst_interface not in policy["dst_interfaces"]:
 
-                    data["policies"][id]["dst_interfaces"].append(dst_interface)
+                        data["policies"][id]["dst_interfaces"].append(dst_interface)
 
     # Parse NAT
 
