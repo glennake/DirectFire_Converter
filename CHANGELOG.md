@@ -92,3 +92,42 @@ All notable changes to this project will be documented in this file.
 
 - Standardisation of Fortinet FortiGate parser indentation levels
 - Move firewall policy data structure to nested lists for addresses, interfaces and services
+
+## [0.6.0] - 2020-04-14
+
+### Added
+
+- Resolve interfaces of objects by static routing information
+
+### Changed
+
+- Rewrite parser module for Cisco ASA pre 8.3
+
+## [0.6.1] - 2020-04-18
+
+### Added
+
+- Support for parsing Cisco ASA pre 8.3 service objects
+
+### Changed
+
+- Bug fixes in Cisco ASA pre 8.3 parser
+- Bug fixes in interface lookup function
+
+## [0.6.2] - 2020-04-18
+
+### Changed
+
+- Migrate all parser and generator modules to new data structure
+- Bug fixes and stardisation across parser and generator modules
+
+## [0.7.0] - 2020-04-23
+
+### Added
+
+- Initial support for parsing Cisco ASA post 8.3
+
+### Changed
+
+- Bug fixes in Cisco ASA pre 8.3 parser module
+- Bug fixes in Fortinet FortiGate generator module
