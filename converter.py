@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Title: DirectFire Converter
 # Description: DirectFire is a firewall configuration conversion tool written in Python

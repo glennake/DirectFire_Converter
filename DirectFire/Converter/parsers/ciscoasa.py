@@ -646,12 +646,81 @@ def parse(logger, src_config, routing_info=""):
 
             if entry_list[0] == "service":
 
-                data["service_objects"][service_object_name]["type"] = "service"
-                data["service_objects"][service_object_name]["protocol"] = entry_list[1]
+                data["service_objects"][service_object_name][
+                    "protocol"
+                ] = resolve_named_protocol(entry_list[1])
+
+                if entry_list[2] == "destination":
+
+                    operator = entry_list[3]
+
+                    ## check operator
+
+                    if operator == "eq":  ## single port
+
+                        data["service_objects"][service_object_name][
+                            "dst_port"
+                        ] = resolve_named_service(entry_list[4])
+                        data["service_objects"][service_object_name]["src_port"] = ""
+                        data["service_objects"][service_object_name]["type"] = "service"
+
+                    elif operator == "range":  ## port range
+
+                        data["service_objects"][service_object_name][
+                            "dst_port_first"
+                        ] = resolve_named_service(entry_list[4])
+                        data["service_objects"][service_object_name][
+                            "dst_port_last"
+                        ] = resolve_named_service(entry_list[5])
+                        data["service_objects"][service_object_name][
+                            "src_port_first"
+                        ] = ""
+                        data["service_objects"][service_object_name][
+                            "src_port_last"
+                        ] = ""
+                        data["service_objects"][service_object_name]["type"] = "range"
+
+                elif entry_list[2] == "source":
+
+                    operator = entry_list[3]
+
+                    ## check operator
+
+                    if operator == "eq":  ## single port
+
+                        data["service_objects"][service_object_name]["dst_port"] = ""
+                        data["service_objects"][service_object_name][
+                            "src_port"
+                        ] = resolve_named_service(entry_list[4])
+                        data["service_objects"][service_object_name]["type"] = "service"
+
+                        if len(entry_list) > 5:
+
+                            if entry_list[5] == "destination":
+
+                                data["service_objects"][service_object_name][
+                                    "dst_port"
+                                ] = entry_list[7]
+
+                    elif operator == "range":  ## port range
+
+                        data["service_objects"][service_object_name][
+                            "dst_port_first"
+                        ] = ""
+                        data["service_objects"][service_object_name][
+                            "dst_port_last"
+                        ] = ""
+                        data["service_objects"][service_object_name][
+                            "src_port_first"
+                        ] = resolve_named_service(entry_list[4])
+                        data["service_objects"][service_object_name][
+                            "src_port_last"
+                        ] = resolve_named_service(entry_list[5])
+                        data["service_objects"][service_object_name]["type"] = "range"
 
             elif entry_list[0] == "description":
 
-                data["network_objects"][network_object_name]["description"] = entry[13:]
+                data["service_objects"][service_object_name]["description"] = entry[13:]
 
     # Parse service groups
 
