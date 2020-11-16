@@ -131,3 +131,9 @@ All notable changes to this project will be documented in this file.
 
 - Bug fixes in Cisco ASA pre 8.3 parser module
 - Bug fixes in Fortinet FortiGate generator module
+
+## [0.7.1] - 2020-11-16
+
+### Added
+
+- Improved logging in Watchguard parser module
