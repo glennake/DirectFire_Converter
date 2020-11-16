@@ -72,7 +72,9 @@ def parse(logger, src_config, routing_info=""):
     interface_routes = []
 
     interfaces = src_config_xml.findall("./interface-list/interface")
-    logger.log(2, __name__ + ": interfaces: found " + len(interfaces) + " interfaces")
+    logger.log(
+        2, __name__ + ": interfaces: found " + str(len(interfaces)) + " interfaces"
+    )
 
     for interface in interfaces:
 
