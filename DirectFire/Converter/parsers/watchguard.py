@@ -61,7 +61,9 @@ def parse(logger, src_config, routing_info=""):
     src_system = src_config_xml.find("system-parameters").find("device-conf")
 
     data["system"]["hostname"] = src_system.find("system-name").text
+    logger.log(2, __name__ + ": system: hostname is " + data["system"]["hostname"])
     data["system"]["domain"] = src_system.find("domain-name").text
+    logger.log(2, __name__ + ": system: domain name is " + data["system"]["domain"])
 
     # Parse interfaces
 
@@ -70,10 +72,12 @@ def parse(logger, src_config, routing_info=""):
     interface_routes = []
 
     interfaces = src_config_xml.findall("./interface-list/interface")
+    logger.log(2, __name__ + ": interfaces: found " + len(interfaces) + " interfaces")
 
     for interface in interfaces:
 
         interface_name = interface.find("name").text
+        logger.log(2, __name__ + ": interfaces: parsing " + interface_name)
 
         data["interfaces"][interface_name] = {}
         data["interfaces"][interface_name]["enabled"] = True
@@ -122,63 +126,122 @@ def parse(logger, src_config, routing_info=""):
 
                 if physical_interface:
 
-                    # find interface enabled
-
-                    if physical_interface.find("mtu").text == "0":
-                        data["interfaces"][interface_name]["enabled"] = False
-                    else:
-                        data["interfaces"][interface_name]["enabled"] = True
-
-                    # if ipv4
-
-                    if physical_interface.find("ip-node-type").text == "IP4_ONLY":
-
-                        # find interface primary ip config
-
-                        interface_ip_member = {}
-                        interface_ip_member["ip_address"] = physical_interface.find(
-                            "ip"
-                        ).text
-                        interface_ip_member["mask"] = physical_interface.find(
-                            "netmask"
-                        ).text
-                        interface_ip_member["type"] = "primary"
-
-                        if interface_ip_member["ip_address"] not in ["", "0.0.0.0"]:
-                            data["interfaces"][interface_name]["ipv4_config"].append(
-                                interface_ip_member
-                            )
-
-                        # find interface secondary ip config
-
-                        secondary_ip = physical_interface.findall(
-                            "./secondary-ip-list/secondary-ip"
+                    if physical_interface.find("enabled").text == "1":
+                        logger.log(
+                            2,
+                            __name__
+                            + ": interfaces: "
+                            + interface_name
+                            + ": is physical interface",
                         )
 
-                        for ipv4_config in secondary_ip:
+                        # interface is enabled
+
+                        data["interfaces"][interface_name]["enabled"] = True
+
+                        # get interface node type
+
+                        try:
+                            intf_node_type = physical_interface.find(
+                                "ip-node-type"
+                            ).text
+                            logger.log(
+                                2,
+                                __name__
+                                + ": interfaces: "
+                                + interface_name
+                                + ": ip-node-type is "
+                                + intf_node_type,
+                            )
+                        except:
+                            logger.log(
+                                2,
+                                __name__
+                                + ": interfaces: "
+                                + interface_name
+                                + ": could not find ip-node-type attribute, defaulting to IP4_ONLY",
+                            )
+                            intf_node_type = "IP4_ONLY"
+
+                        # if ipv4
+
+                        if intf_node_type == "IP4_ONLY":
+
+                            # find interface primary ip config
 
                             interface_ip_member = {}
-                            interface_ip_member["ip_address"] = ipv4_config.find(
+                            interface_ip_member["ip_address"] = physical_interface.find(
                                 "ip"
                             ).text
-                            interface_ip_member["mask"] = ipv4_config.find(
+                            interface_ip_member["mask"] = physical_interface.find(
                                 "netmask"
                             ).text
-
-                            if (
-                                len(data["interfaces"][interface_name]["ipv4_config"])
-                                == 0
-                            ):
-                                interface_ip_member["type"] = "primary"
-                            else:
-                                interface_ip_member["type"] = "secondary"
+                            interface_ip_member["type"] = "primary"
 
                             if interface_ip_member["ip_address"] not in ["", "0.0.0.0"]:
                                 data["interfaces"][interface_name][
                                     "ipv4_config"
                                 ].append(interface_ip_member)
 
-                    ### need to add ipv6 support
+                            # find interface secondary ip config
+
+                            secondary_ip = physical_interface.findall(
+                                "./secondary-ip-list/secondary-ip"
+                            )
+
+                            for ipv4_config in secondary_ip:
+
+                                interface_ip_member = {}
+                                interface_ip_member["ip_address"] = ipv4_config.find(
+                                    "ip"
+                                ).text
+                                interface_ip_member["mask"] = ipv4_config.find(
+                                    "netmask"
+                                ).text
+
+                                if (
+                                    len(
+                                        data["interfaces"][interface_name][
+                                            "ipv4_config"
+                                        ]
+                                    )
+                                    == 0
+                                ):
+                                    interface_ip_member["type"] = "primary"
+                                else:
+                                    interface_ip_member["type"] = "secondary"
+
+                                if interface_ip_member["ip_address"] not in [
+                                    "",
+                                    "0.0.0.0",
+                                ]:
+                                    data["interfaces"][interface_name][
+                                        "ipv4_config"
+                                    ].append(interface_ip_member)
+
+                            logger.log(
+                                2,
+                                __name__
+                                + ": interfaces: "
+                                + interface_name
+                                + ": ip addresses found "
+                                + str(interface_ip_member),
+                            )
+
+                    elif physical_interface.find("enabled").text == "0":
+
+                        data["interfaces"][interface_name]["enabled"] = False
+
+                        logger.log(
+                            2,
+                            __name__
+                            + ": interfaces: "
+                            + interface_name
+                            + ": is disabled",
+                        )
+
+                        ### do something with disabled interfaces, these are missing ip-node-type
+                        ### also need to add ipv6 support
 
                     # find interface mtu
 
@@ -200,6 +263,15 @@ def parse(logger, src_config, routing_info=""):
 
                         interface_routes.append(interface_route)
 
+                        logger.log(
+                            2,
+                            __name__
+                            + ": interfaces: "
+                            + interface_name
+                            + ": is external interface, default gateway is "
+                            + interface_route["gateway"],
+                        )
+
                     # set type
 
                     data["interfaces"][interface_name]["type"] = "interface"
@@ -209,6 +281,14 @@ def parse(logger, src_config, routing_info=""):
                     # probably a VPN tunnel interface
 
                     data["interfaces"][interface_name]["type"] = "vpn"
+
+                    logger.log(
+                        2,
+                        __name__
+                        + ": interfaces: "
+                        + interface_name
+                        + ": is not a physical interface, assuming a VPN tunnel",
+                    )
 
     # Parse zones
 
@@ -380,8 +460,8 @@ def parse(logger, src_config, routing_info=""):
 
                 if mbr_type == "1":  # single type / code
 
-                    mbr_icmp_type = member.find("icmp_type").text
-                    mbr_icmp_code = member.find("icmp_code").text
+                    mbr_icmp_type = member.find("icmp-type").text
+                    mbr_icmp_code = member.find("icmp-code").text
                     mbr_name = (
                         "svc_"
                         + mbr_protocol
