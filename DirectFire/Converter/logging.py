@@ -58,3 +58,7 @@ class logger:
             elif log_level == 5:  ## critical
 
                 logging.critical(message)
+
+            elif log_level == 6:  ## exception
+
+                logging.exception(message)
