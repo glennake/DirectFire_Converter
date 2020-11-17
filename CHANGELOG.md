@@ -149,3 +149,15 @@ All notable changes to this project will be documented in this file.
 - Overhaul logging across all modules and improve exception logging
 - Improved logging in Watchguard parser module
 - Improved logging in FortiGate generator module
+
+## [0.7.3] - 2020-11-17
+
+### Added
+
+- Added more default interface exclusions in Watchguard parser module
+- Source appliance context logging in Watchguard parser module
+
+### Changed
+
+- Fixed enhanced exception logging across several modules
+- Improved logging in Watchguard parser module

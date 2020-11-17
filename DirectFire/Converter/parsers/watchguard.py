@@ -86,6 +86,26 @@ def parse(src_config, routing_info=""):
     Parser specific variables
     """
 
+    # Get context
+
+    try:
+        src_hardware_platform = src_config_xml.find("base-model").text
+        logger.info(
+            __name__ + ": source hardware platform is " + str(src_hardware_platform)
+        )
+    except:
+        src_hardware_platform = None
+        logger.info(__name__ + ": source hardware platform is unknown")
+
+    try:
+        src_software_version = src_config_xml.find("for-version").text
+        logger.info(
+            __name__ + ": source software version is " + str(src_software_version)
+        )
+    except:
+        src_software_version = None
+        logger.info(__name__ + ": source software version is unknown")
+
     # Parse system
 
     logger.info(__name__ + ": parse system")
@@ -137,6 +157,9 @@ def parse(src_config, routing_info=""):
             "Any-VPN",
             "Firebox",
             "Tunnel-Switch",
+            "PPTP",
+            "SSL-VPN",
+            "WG-Loopback",
         ]:
 
             data["interfaces"][interface_name] = {}
@@ -307,16 +330,62 @@ def parse(src_config, routing_info=""):
 
                 else:
 
-                    # probably a VPN tunnel interface
+                    intf_type = interface.find("./if-item-list/item/item-type").text
 
-                    data["interfaces"][interface_name]["type"] = "vpn"
+                    if intf_type == 2:  # VLAN interface
 
-                    logger.info(
-                        __name__
-                        + ": interfaces: "
-                        + interface_name
-                        + ": is not a physical interface, assuming a VPN tunnel",
-                    )
+                        data["interfaces"][interface_name]["type"] = "vlan"
+
+                        logger.info(
+                            __name__
+                            + ": interfaces: "
+                            + interface_name
+                            + ": is a VLAN interface",
+                        )
+
+                    if intf_type == 4:  # VPN tunnel interface
+
+                        data["interfaces"][interface_name]["type"] = "vpn"
+
+                        logger.info(
+                            __name__
+                            + ": interfaces: "
+                            + interface_name
+                            + ": is a VPN tunnel interface",
+                        )
+
+                    if intf_type == 5:  # SSL VPN tunnel interface
+
+                        data["interfaces"][interface_name]["type"] = "sslvpn"
+
+                        logger.info(
+                            __name__
+                            + ": interfaces: "
+                            + interface_name
+                            + ": is a SSL VPN tunnel interface",
+                        )
+
+                    elif intf_type == 13:  # Loopback interface
+
+                        data["interfaces"][interface_name]["type"] = "loopback"
+
+                        logger.info(
+                            __name__
+                            + ": interfaces: "
+                            + interface_name
+                            + ": is a loopback interface",
+                        )
+
+                    else:
+
+                        data["interfaces"][interface_name]["type"] = "unknown"
+
+                        logger.info(
+                            __name__
+                            + ": interfaces: "
+                            + interface_name
+                            + ": is an unknown interface type",
+                        )
 
                     logger.debug(
                         __name__
@@ -325,6 +394,23 @@ def parse(src_config, routing_info=""):
                         + ": "
                         + str(ET.tostring(interface)),
                     )
+
+        else:
+
+            logger.info(
+                __name__
+                + ": interfaces: "
+                + interface_name
+                + ": is a default interface, ignoring"
+            )
+
+            logger.debug(
+                __name__
+                + ": interfaces: "
+                + interface_name
+                + ": "
+                + str(ET.tostring(interface)),
+            )
 
     # Parse zones
 
