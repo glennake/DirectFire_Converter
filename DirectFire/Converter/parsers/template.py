@@ -2,6 +2,10 @@
 
 # Import modules
 
+import logger
+import sys
+from traceback_with_variables import prints_tb, LoggerAsFile
+
 """
 Import any modules needed here
 """
@@ -9,17 +13,40 @@ Import any modules needed here
 # Import common, logging and settings
 
 import DirectFire.Converter.common as common
-from DirectFire.Converter.logging import logger
 import DirectFire.Converter.settings as settings
 
 # Initialise common functions
 
 cleanse_names = common.cleanse_names
 
+# Initiate logging
 
-def parse(logger, src_config, routing_info=""):
+logger = logging.getLogger(__name__)
 
-    logger.log(2, __name__ + ": parser module started")
+
+# Catch exceptions and log
+
+
+@prints_tb(
+    file_=LoggerAsFile(logger),
+    num_context_lines=3,
+    max_value_str_len=9999999,
+    max_exc_str_len=9999999,
+)
+def catch_exception(exc_type, exc_value, exc_trace):
+
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
+
+
+sys.excepthook = catch_exception
+
+
+# Parser
+
+
+def parse(src_config, routing_info=""):
+
+    logger.info(__name__ + ": parser module started")
 
     # Initialise data
 
@@ -59,7 +86,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse system
 
-    logger.log(2, __name__ + ": parse system")
+    logger.info(__name__ + ": parse system")
 
     """
     Parse system objects such as hostname, DNS
@@ -67,7 +94,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse interfaces
 
-    logger.log(2, __name__ + ": parse interfaces")
+    logger.info(__name__ + ": parse interfaces")
 
     """
     Parse interfaces
@@ -75,7 +102,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse zones
 
-    logger.log(2, __name__ + ": parse zones")
+    logger.info(__name__ + ": parse zones")
 
     """
     Parse zones
@@ -83,7 +110,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse static routes
 
-    logger.log(2, __name__ + ": parse static routes")
+    logger.info(__name__ + ": parse static routes")
 
     """
     Parse static routes
@@ -91,7 +118,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv4 network objects
 
-    logger.log(2, __name__ + ": parse IPv4 network objects")
+    logger.info(__name__ + ": parse IPv4 network objects")
 
     """
     Parse IPv4 network objects
@@ -99,7 +126,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv6 network objects
 
-    logger.log(2, __name__ + ": parse IPv6 network objects")
+    logger.info(__name__ + ": parse IPv6 network objects")
 
     """
     Parse IPv6 network objects
@@ -107,7 +134,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv4 network groups
 
-    logger.log(2, __name__ + ": parse IPv4 network groups")
+    logger.info(__name__ + ": parse IPv4 network groups")
 
     """
     Parse IPv4 network groups
@@ -115,7 +142,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv6 network groups
 
-    logger.log(2, __name__ + ": parse IPv6 network groups")
+    logger.info(__name__ + ": parse IPv6 network groups")
 
     """
     Parse IPv6 network groups
@@ -123,7 +150,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service objects
 
-    logger.log(2, __name__ + ": parse service objects")
+    logger.info(__name__ + ": parse service objects")
 
     """
     Parse service objects
@@ -131,7 +158,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service groups
 
-    logger.log(2, __name__ + ": parse service groups")
+    logger.info(__name__ + ": parse service groups")
 
     """
     Parse service groups
@@ -139,7 +166,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse firewall policies")
+    logger.info(__name__ + ": parse firewall policies")
 
     """
     Parse firewall policies
@@ -147,7 +174,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse NAT
 
-    logger.log(2, __name__ + ": parse NAT")
+    logger.info(__name__ + ": parse NAT")
 
     """
     Parse NAT policies
@@ -155,6 +182,6 @@ def parse(logger, src_config, routing_info=""):
 
     # Return parsed data
 
-    logger.log(2, __name__ + ": parser module finished")
+    logger.info(__name__ + ": parser module finished")
 
     return data

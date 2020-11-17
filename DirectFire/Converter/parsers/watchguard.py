@@ -2,12 +2,15 @@
 
 # Import modules
 
+import logging
+import sys
+from traceback_with_variables import prints_tb, LoggerAsFile
+
 import xml.etree.ElementTree as ET
 
 # Import common, logging and settings
 
 import DirectFire.Converter.common as common
-from DirectFire.Converter.logging import logger
 import DirectFire.Converter.settings as settings
 
 # Initialise common functions
@@ -15,10 +18,39 @@ import DirectFire.Converter.settings as settings
 cleanse_names = common.cleanse_names
 interface_lookup = common.interface_lookup
 
+# Initiate logging
 
-def parse(logger, src_config, routing_info=""):
+logger = logging.getLogger(__name__)
 
-    logger.log(2, __name__ + ": parser module started")
+# Catch exceptions and log
+
+
+@prints_tb(
+    file_=LoggerAsFile(logger),
+    num_context_lines=3,
+    max_value_str_len=9999999,
+    max_exc_str_len=9999999,
+)
+def catch_exception(exc_type, exc_value, exc_trace):
+
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
+
+
+sys.excepthook = catch_exception
+
+
+# Parser
+
+
+@prints_tb(
+    file_=LoggerAsFile(logger),
+    num_context_lines=3,
+    max_value_str_len=9999999,
+    max_exc_str_len=9999999,
+)
+def parse(src_config, routing_info=""):
+
+    logger.info(__name__ + ": parser module started")
 
     # Initialise data
 
@@ -56,30 +88,31 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse system
 
-    logger.log(2, __name__ + ": parse system")
+    logger.info(__name__ + ": parse system")
 
     src_system = src_config_xml.find("system-parameters").find("device-conf")
 
     data["system"]["hostname"] = src_system.find("system-name").text
-    logger.log(2, __name__ + ": system: hostname is " + data["system"]["hostname"])
+    logger.info(__name__ + ": system: hostname is " + data["system"]["hostname"])
     data["system"]["domain"] = src_system.find("domain-name").text
-    logger.log(2, __name__ + ": system: domain name is " + data["system"]["domain"])
+    logger.info(__name__ + ": system: domain name is " + data["system"]["domain"])
 
     # Parse interfaces
 
-    logger.log(2, __name__ + ": parse interfaces")
+    logger.info(__name__ + ": parse interfaces")
 
     interface_routes = []
 
     interfaces = src_config_xml.findall("./interface-list/interface")
-    logger.log(
-        2, __name__ + ": interfaces: found " + str(len(interfaces)) + " interfaces"
+
+    logger.info(
+        __name__ + ": interfaces: found " + str(len(interfaces)) + " interfaces"
     )
 
     for interface in interfaces:
 
         interface_name = interface.find("name").text
-        logger.log(2, __name__ + ": interfaces: parsing " + interface_name)
+        logger.info(__name__ + ": interfaces: parsing " + interface_name)
 
         data["interfaces"][interface_name] = {}
         data["interfaces"][interface_name]["enabled"] = True
@@ -129,12 +162,11 @@ def parse(logger, src_config, routing_info=""):
                 if physical_interface:
 
                     if physical_interface.find("enabled").text == "1":
-                        logger.log(
-                            2,
+                        logger.info(
                             __name__
                             + ": interfaces: "
                             + interface_name
-                            + ": is physical interface",
+                            + ": is a physical interface",
                         )
 
                         # interface is enabled
@@ -147,8 +179,7 @@ def parse(logger, src_config, routing_info=""):
                             intf_node_type = physical_interface.find(
                                 "ip-node-type"
                             ).text
-                            logger.log(
-                                2,
+                            logger.info(
                                 __name__
                                 + ": interfaces: "
                                 + interface_name
@@ -156,8 +187,7 @@ def parse(logger, src_config, routing_info=""):
                                 + intf_node_type,
                             )
                         except:
-                            logger.log(
-                                2,
+                            logger.info(
                                 __name__
                                 + ": interfaces: "
                                 + interface_name
@@ -221,8 +251,7 @@ def parse(logger, src_config, routing_info=""):
                                         "ipv4_config"
                                     ].append(interface_ip_member)
 
-                            logger.log(
-                                2,
+                            logger.debug(
                                 __name__
                                 + ": interfaces: "
                                 + interface_name
@@ -234,8 +263,7 @@ def parse(logger, src_config, routing_info=""):
 
                         data["interfaces"][interface_name]["enabled"] = False
 
-                        logger.log(
-                            2,
+                        logger.info(
                             __name__
                             + ": interfaces: "
                             + interface_name
@@ -265,8 +293,7 @@ def parse(logger, src_config, routing_info=""):
 
                         interface_routes.append(interface_route)
 
-                        logger.log(
-                            2,
+                        logger.info(
                             __name__
                             + ": interfaces: "
                             + interface_name
@@ -284,17 +311,24 @@ def parse(logger, src_config, routing_info=""):
 
                     data["interfaces"][interface_name]["type"] = "vpn"
 
-                    logger.log(
-                        2,
+                    logger.info(
                         __name__
                         + ": interfaces: "
                         + interface_name
                         + ": is not a physical interface, assuming a VPN tunnel",
                     )
 
+                    logger.debug(
+                        __name__
+                        + ": interfaces: "
+                        + interface_name
+                        + ": "
+                        + str(ET.tostring(interface)),
+                    )
+
     # Parse zones
 
-    logger.log(2, __name__ + ": parse zones - not yet supported")
+    logger.info(__name__ + ": parse zones - not yet supported")
 
     """
     Parse zones
@@ -302,11 +336,17 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse static routes
 
-    logger.log(2, __name__ + ": parse static routes")
+    logger.info(__name__ + ": parse static routes")
 
     src_routes = src_config_xml.findall("./system-parameters/route/route-entry")
 
-    for interface_route_config in interface_routes:
+    logger.info(
+        __name__ + ": routes: found " + str(len(interface_routes)) + " interface routes"
+    )
+
+    for route_id, interface_route_config in enumerate(interface_routes):
+
+        logger.info(__name__ + ": routes: parsing interface route " + str(route_id))
 
         route = {}
         route["network"] = "0.0.0.0"
@@ -315,9 +355,21 @@ def parse(logger, src_config, routing_info=""):
         route["interface"] = interface_route_config["interface"]
         route["distance"] = "1"
 
+        logger.info(
+            __name__
+            + ": routes: parsing interface route to "
+            + route["gateway"]
+            + " for interface "
+            + route["interface"]
+        )
+
         data["routes"].append(route)
 
-    for route_config in src_routes:
+    logger.info(__name__ + ": routes: found " + str(len(src_routes)) + " static routes")
+
+    for route_id, route_config in enumerate(src_routes):
+
+        logger.info(__name__ + ": routes: parsing static route " + str(route_id))
 
         route_gateway = route_config.find("gateway-ip").text
 
@@ -334,13 +386,24 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse network groups
 
-    logger.log(2, __name__ + ": parse network groups")
+    logger.info(__name__ + ": parse network groups")
 
     src_addr_grp = src_config_xml.findall("./address-group-list/address-group")
+
+    logger.info(
+        __name__
+        + ": network_groups: found "
+        + str(len(src_addr_grp))
+        + " network groups"
+    )
 
     for addr_grp in src_addr_grp:
 
         grp_name = cleanse_names(addr_grp.find("name").text)
+
+        logger.info(
+            __name__ + ": network_groups: parsing network group " + str(grp_name)
+        )
 
         data["network_groups"][grp_name] = {}
         data["network_groups"][grp_name]["type"] = "group"
@@ -397,13 +460,24 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service groups
 
-    logger.log(2, __name__ + ": parse service groups")
+    logger.info(__name__ + ": parse service groups")
 
     src_services = src_config_xml.findall("./service-list/service")
+
+    logger.info(
+        __name__
+        + ": service_groups: found "
+        + str(len(src_services))
+        + " service groups"
+    )
 
     for svc_group in src_services:
 
         grp_name = cleanse_names(svc_group.find("name").text)
+
+        logger.info(
+            __name__ + ": service_groups: parsing service group " + str(grp_name)
+        )
 
         data["service_groups"][grp_name] = {}
         data["service_groups"][grp_name]["type"] = "group"
@@ -484,11 +558,15 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse firewall policies")
+    logger.warning(__name__ + ": parse firewall policies - not yet supported")
 
     src_policies = src_config_xml.findall("./policy-list/policy")
 
-    for policy_config in src_policies:
+    logger.info(__name__ + ": policies: found " + str(len(src_policies)) + " policies")
+
+    for policy_id, policy_config in enumerate(src_policies):
+
+        logger.info(__name__ + ": policies: parsing policy " + str(policy_id))
 
         policy = {}
 
@@ -575,14 +653,14 @@ def parse(logger, src_config, routing_info=""):
 
         ### need to lookup interface for source alias
 
-        data["policies"].append(policy)
+        # data["policies"].append(policy)
 
     # Parse NAT
 
-    logger.log(3, __name__ + ": parse NAT - not yet supported")
+    logger.warning(__name__ + ": parse NAT - not yet supported")
 
     # Return parsed data
 
-    logger.log(2, __name__ + ": parser module finished")
+    logger.info(__name__ + ": parser module finished")
 
     return data

@@ -2,6 +2,10 @@
 
 # Import modules
 
+import logging
+import sys
+from traceback_with_variables import prints_tb, LoggerAsFile
+
 """
 Import any modules needed here
 """
@@ -9,7 +13,6 @@ Import any modules needed here
 # Import common, logging and settings
 
 import DirectFire.Converter.common as common
-from DirectFire.Converter.logging import logger
 import DirectFire.Converter.settings as settings
 
 # Initialise common functions
@@ -18,10 +21,34 @@ import DirectFire.Converter.settings as settings
 Import any common functions needed here
 """
 
+# Initiate logging
 
-def generate(logger, parsed_data):
+logger = logging.getLogger(__name__)
 
-    logger.log(2, __name__ + ": generator module started")
+
+# Catch exceptions and log
+
+
+@prints_tb(
+    file_=LoggerAsFile(logger),
+    num_context_lines=3,
+    max_value_str_len=9999999,
+    max_exc_str_len=9999999,
+)
+def catch_exception(exc_type, exc_value, exc_trace):
+
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
+
+
+sys.excepthook = catch_exception
+
+
+# Generator
+
+
+def generate(parsed_data):
+
+    logger.info(__name__ + ": generator module started")
 
     # Initialise variables
 
@@ -37,14 +64,14 @@ def generate(logger, parsed_data):
 
     # Generate system
 
-    logger.log(2, __name__ + ": generate system")
+    logger.info(__name__ + ": generate system")
 
     dst_config.append("config system global")
 
     if "hostname" in parsed_data["system"]:
         dst_config.append(cfglvl1 + "set hostname " + parsed_data["system"]["hostname"])
     else:
-        logger.log(3, __name__ + ": hostname not found in parsed data")
+        logger.warning(__name__ + ": hostname not found in parsed data")
 
     dst_config.append("end")
 
@@ -53,17 +80,26 @@ def generate(logger, parsed_data):
     if "domain" in parsed_data["system"]:
         dst_config.append(cfglvl1 + "set domain " + parsed_data["system"]["domain"])
     else:
-        logger.log(3, __name__ + ": domain name not found in parsed data")
+        logger.warning(__name__ + ": domain name not found in parsed data")
 
     dst_config.append("end")
 
     # Generate interfaces
 
-    logger.log(2, __name__ + ": generate interfaces")
+    logger.info(__name__ + ": generate interfaces")
 
     dst_config.append("config system interface")
 
+    logger.info(
+        __name__
+        + ": interfaces: found "
+        + str(len(parsed_data["interfaces"]))
+        + " interfaces"
+    )
+
     for interface, attributes in parsed_data["interfaces"].items():
+
+        logger.info(__name__ + ": interfaces: generating " + interface)
 
         if attributes["type"] == "interface":
 
@@ -117,7 +153,7 @@ def generate(logger, parsed_data):
 
     # Generate zones
 
-    logger.log(3, __name__ + ": generate zones - not yet supported")
+    logger.warning(__name__ + ": generate zones - not yet supported")
 
     """
     Generate zones
@@ -125,11 +161,17 @@ def generate(logger, parsed_data):
 
     # Generate static routes
 
-    logger.log(2, __name__ + ": generate static routes")
+    logger.info(__name__ + ": generate static routes")
 
     dst_config.append("config router static")
 
+    logger.info(
+        __name__ + ": routes: found " + str(len(parsed_data["routes"])) + " routes"
+    )
+
     for route_id, attributes in enumerate(parsed_data["routes"]):
+
+        logger.info(__name__ + ": routes: generating route " + str(route_id))
 
         dst_config.append(cfglvl1 + "edit " + str(route_id))
         dst_config.append(
@@ -144,11 +186,22 @@ def generate(logger, parsed_data):
 
     # Generate network objects
 
-    logger.log(2, __name__ + ": generate network objects")
+    logger.info(__name__ + ": generate network objects")
 
     dst_config.append("config firewall address")
 
+    logger.info(
+        __name__
+        + ": network_objects: found "
+        + str(len(parsed_data["network_objects"]))
+        + " network objects"
+    )
+
     for address, attributes in parsed_data["network_objects"].items():
+
+        logger.info(
+            __name__ + ": network_objects: generating network object " + address
+        )
 
         dst_config.append(cfglvl1 + 'edit "' + address + '"')
 
@@ -182,11 +235,20 @@ def generate(logger, parsed_data):
 
     # Generate network groups
 
-    logger.log(2, __name__ + ": generate network groups")
+    logger.info(__name__ + ": generate network groups")
 
     dst_config.append("config firewall addrgrp")
 
+    logger.info(
+        __name__
+        + ": network_groups: found "
+        + str(len(parsed_data["network_groups"]))
+        + " network groups"
+    )
+
     for group, attributes in parsed_data["network_groups"].items():
+
+        logger.info(__name__ + ": network_groups: generating network group " + group)
 
         grp_members = ""
 
@@ -206,11 +268,22 @@ def generate(logger, parsed_data):
 
     # Generate service objects
 
-    logger.log(2, __name__ + ": generate service objects")
+    logger.info(__name__ + ": generate service objects")
 
     dst_config.append("config firewall service custom")
 
+    logger.info(
+        __name__
+        + ": service_objects: found "
+        + str(len(parsed_data["service_objects"]))
+        + " service objects"
+    )
+
     for service, attributes in parsed_data["service_objects"].items():
+
+        logger.info(
+            __name__ + ": service_objects: generating service object " + service
+        )
 
         dst_config.append('  edit "' + service + '"')
 
@@ -285,11 +358,20 @@ def generate(logger, parsed_data):
 
     # Generate service groups
 
-    logger.log(2, __name__ + ": generate service groups")
+    logger.info(__name__ + ": generate service groups")
 
     dst_config.append("config firewall service group")
 
+    logger.info(
+        __name__
+        + ": service_groups: found "
+        + str(len(parsed_data["service_groups"]))
+        + " service groups"
+    )
+
     for group, attributes in parsed_data["service_groups"].items():
+
+        logger.info(__name__ + ": service_groups: generating service group " + group)
 
         grp_members = ""
 
@@ -309,11 +391,20 @@ def generate(logger, parsed_data):
 
     # Generate policies
 
-    logger.log(3, __name__ + ": generate policies - not yet supported")
+    logger.warning(__name__ + ": generate policies - not yet supported")
 
     dst_config.append("config firewall policy")
 
+    logger.info(
+        __name__
+        + ": policies: found "
+        + str(len(parsed_data["policies"]))
+        + " policies"
+    )
+
     for policy_id, attributes in enumerate(parsed_data["policies"]):
+
+        logger.info(__name__ + ": policies: generating policy " + policy_id)
 
         dst_config.append(cfglvl1 + "edit " + str(policy_id))
 
@@ -350,10 +441,10 @@ def generate(logger, parsed_data):
 
     # Generate NAT
 
-    logger.log(3, __name__ + ": generate NAT - not yet supported")
+    logger.warning(__name__ + ": generate NAT - not yet supported")
 
     # Return generated config
 
-    logger.log(2, __name__ + ": generator module finished")
+    logger.info(__name__ + ": generator module finished")
 
     return dst_config

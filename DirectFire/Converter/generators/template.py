@@ -2,6 +2,10 @@
 
 # Import modules
 
+import logging
+import sys
+from traceback_with_variables import prints_tb, LoggerAsFile
+
 """
 Import any modules needed here
 """
@@ -9,7 +13,6 @@ Import any modules needed here
 # Import common, logging and settings
 
 import DirectFire.Converter.common as common
-from DirectFire.Converter.logging import logger
 import DirectFire.Converter.settings as settings
 
 # Initialise common functions
@@ -18,10 +21,34 @@ import DirectFire.Converter.settings as settings
 Import any common functions needed here
 """
 
+# Initiate logging
 
-def generate(logger, parsed_data):
+logger = logging.getLogger(__name__)
 
-    logger.log(2, __name__ + ": generator module started")
+
+# Catch exceptions and log
+
+
+@prints_tb(
+    file_=LoggerAsFile(logger),
+    num_context_lines=3,
+    max_value_str_len=9999999,
+    max_exc_str_len=9999999,
+)
+def catch_exception(exc_type, exc_value, exc_trace):
+
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
+
+
+sys.excepthook = catch_exception
+
+
+# Generator
+
+
+def generate(parsed_data):
+
+    logger.info(__name__ + ": generator module started")
 
     # Initialise variables
 
@@ -35,7 +62,7 @@ def generate(logger, parsed_data):
 
     # Generate system
 
-    logger.log(2, __name__ + ": generate system")
+    logger.info(__name__ + ": generate system")
 
     """
     Generate system objects such as hostname, DNS
@@ -43,7 +70,7 @@ def generate(logger, parsed_data):
 
     # Generate interfaces
 
-    logger.log(2, __name__ + ": generate interfaces")
+    logger.info(__name__ + ": generate interfaces")
 
     """
     Generate interfaces
@@ -51,7 +78,7 @@ def generate(logger, parsed_data):
 
     # Generate zones
 
-    logger.log(2, __name__ + ": generate zones")
+    logger.info(__name__ + ": generate zones")
 
     """
     Generate zones
@@ -59,7 +86,7 @@ def generate(logger, parsed_data):
 
     # Generate static routes
 
-    logger.log(2, __name__ + ": generate static routes")
+    logger.info(__name__ + ": generate static routes")
 
     """
     Generate static routes
@@ -67,7 +94,7 @@ def generate(logger, parsed_data):
 
     # Generate network objects
 
-    logger.log(2, __name__ + ": generate network objects")
+    logger.info(__name__ + ": generate network objects")
 
     """
     Generate network objects
@@ -75,7 +102,7 @@ def generate(logger, parsed_data):
 
     # Generate network groups
 
-    logger.log(2, __name__ + ": generate network groups")
+    logger.info(__name__ + ": generate network groups")
 
     """
     Generate network groups
@@ -83,7 +110,7 @@ def generate(logger, parsed_data):
 
     # Generate service objects
 
-    logger.log(2, __name__ + ": generate service objects")
+    logger.info(__name__ + ": generate service objects")
 
     """
     Generate service objects
@@ -91,7 +118,7 @@ def generate(logger, parsed_data):
 
     # Generate service groups
 
-    logger.log(2, __name__ + ": generate service groups")
+    logger.info(__name__ + ": generate service groups")
 
     """
     Generate service groups
@@ -99,7 +126,7 @@ def generate(logger, parsed_data):
 
     # Generate policies
 
-    logger.log(2, __name__ + ": generate policies")
+    logger.info(__name__ + ": generate policies")
 
     """
     Generate firewall policies
@@ -107,7 +134,7 @@ def generate(logger, parsed_data):
 
     # Generate NAT
 
-    logger.log(2, __name__ + ": generate NAT")
+    logger.info(__name__ + ": generate NAT")
 
     """
     Generate NAT policies
@@ -115,6 +142,6 @@ def generate(logger, parsed_data):
 
     # Return generated config
 
-    logger.log(2, __name__ + ": generator module finished")
+    logger.info(__name__ + ": generator module finished")
 
     return dst_config

@@ -2,12 +2,15 @@
 
 # Import modules
 
+import logger
+import sys
+from traceback_with_variables import prints_tb, LoggerAsFile
+
 import re
 
 # Import common, logging and settings
 
 import DirectFire.Converter.common as common
-from DirectFire.Converter.logging import logger
 import DirectFire.Converter.settings as settings
 
 # Initialise common functions
@@ -15,9 +18,34 @@ import DirectFire.Converter.settings as settings
 cleanse_names = common.cleanse_names
 common.common_regex()
 
-def parse(logger, src_config, routing_info=""):
+# Initiate logging
 
-    logger.log(2, __name__ + ": parser module started")
+logger = logging.getLogger(__name__)
+
+
+# Catch exceptions and log
+
+
+@prints_tb(
+    file_=LoggerAsFile(logger),
+    num_context_lines=3,
+    max_value_str_len=9999999,
+    max_exc_str_len=9999999,
+)
+def catch_exception(exc_type, exc_value, exc_trace):
+
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
+
+
+sys.excepthook = catch_exception
+
+
+# Parser
+
+
+def parse(src_config, routing_info=""):
+
+    logger.info(__name__ + ": parser module started")
 
     # Initialise data
 
@@ -57,14 +85,14 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse system
 
-    logger.log(2, __name__ + ": parse system")
+    logger.info(__name__ + ": parse system")
 
     re_match = re.search('(?:set hostname "(.*?)"\n)', src_config)
     data["system"]["hostname"] = re_match.group(1)
 
     # Parse interfaces
 
-    logger.log(2, __name__ + ": parse interfaces - not yet supported")
+    logger.info(__name__ + ": parse interfaces - not yet supported")
 
     """
     Parse interfaces
@@ -72,7 +100,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse zones
 
-    logger.log(2, __name__ + ": parse zones - not yet supported")
+    logger.info(__name__ + ": parse zones - not yet supported")
 
     """
     Parse zones
@@ -80,7 +108,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse static routes
 
-    logger.log(2, __name__ + ": parse static routes")
+    logger.info(__name__ + ": parse static routes")
 
     re_match = re.search("\nconfig router static\n(?:.*?)\nend", src_config, re.DOTALL)
     routes_block = re_match.group(0).strip()
@@ -130,7 +158,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv4 network objects
 
-    logger.log(2, __name__ + ": parse IPv4 network objects")
+    logger.info(__name__ + ": parse IPv4 network objects")
 
     re_match = re.search(
         "\nconfig firewall address\n(?:.*?)\nend", src_config, re.DOTALL
@@ -320,7 +348,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv6 network objects
 
-    logger.log(2, __name__ + ": parse IPv6 network objects")
+    logger.info(__name__ + ": parse IPv6 network objects")
 
     re_match = re.search(
         "\nconfig firewall address6\n(?:.*?)\nend", src_config, re.DOTALL
@@ -441,7 +469,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv4 network groups
 
-    logger.log(2, __name__ + ": parse IPv4 network groups")
+    logger.info(__name__ + ": parse IPv4 network groups")
 
     re_match = re.search(
         "\nconfig firewall addrgrp\n(?:.*?)\nend", src_config, re.DOTALL
@@ -478,7 +506,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv6 network groups
 
-    logger.log(2, __name__ + ": parse IPv6 network groups")
+    logger.info(__name__ + ": parse IPv6 network groups")
 
     re_match = re.search(
         "\nconfig firewall addrgrp6\n(?:.*?)(?:\n)?end", src_config, re.DOTALL
@@ -515,7 +543,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service objects
 
-    logger.log(2, __name__ + ": parse service objects - not yet supported")
+    logger.info(__name__ + ": parse service objects - not yet supported")
 
     """
     Parse service objects
@@ -523,7 +551,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service groups
 
-    logger.log(2, __name__ + ": parse service groups - not yet supported")
+    logger.info(__name__ + ": parse service groups - not yet supported")
 
     """
     Parse service groups
@@ -531,7 +559,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse firewall policies - not yet supported")
+    logger.info(__name__ + ": parse firewall policies - not yet supported")
 
     """
     Parse firewall policies
@@ -539,7 +567,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse NAT
 
-    logger.log(2, __name__ + ": parse NAT - not yet supported")
+    logger.info(__name__ + ": parse NAT - not yet supported")
 
     """
     Parse NAT policies
@@ -547,6 +575,6 @@ def parse(logger, src_config, routing_info=""):
 
     # Return parsed data
 
-    logger.log(2, __name__ + ": parser module finished")
+    logger.info(__name__ + ": parser module finished")
 
     return data

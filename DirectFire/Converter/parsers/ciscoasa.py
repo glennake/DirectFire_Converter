@@ -2,12 +2,15 @@
 
 # Import modules
 
+import logger
+import sys
+from traceback_with_variables import prints_tb, LoggerAsFile
+
 import re
 
 # Import common, logging and settings
 
 import DirectFire.Converter.common as common
-from DirectFire.Converter.logging import logger
 import DirectFire.Converter.settings as settings
 
 # Initialise common functions
@@ -16,10 +19,34 @@ cleanse_names = common.cleanse_names
 common.common_regex()
 interface_lookup = common.interface_lookup
 
+# Initiate logging
 
-def parse(logger, src_config, routing_info=""):
+logger = logging.getLogger(__name__)
 
-    logger.log(2, __name__ + ": parser module started")
+
+# Catch exceptions and log
+
+
+@prints_tb(
+    file_=LoggerAsFile(logger),
+    num_context_lines=3,
+    max_value_str_len=9999999,
+    max_exc_str_len=9999999,
+)
+def catch_exception(exc_type, exc_value, exc_trace):
+
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
+
+
+sys.excepthook = catch_exception
+
+
+# Parser
+
+
+def parse(src_config, routing_info=""):
+
+    logger.info(__name__ + ": parser module started")
 
     # Initialise data
 
@@ -358,7 +385,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse system
 
-    logger.log(3, __name__ + ": parse system - not yet supported")
+    logger.warning(__name__ + ": parse system - not yet supported")
 
     """
     Parse system objects such as hostname, DNS
@@ -366,7 +393,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse interfaces
 
-    logger.log(2, __name__ + ": parse interfaces")
+    logger.info(__name__ + ": parse interfaces")
 
     for re_match in re.finditer("interface (.*)\n(?: .*\n){1,}!", src_config,):
 
@@ -455,7 +482,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse zones
 
-    logger.log(3, __name__ + ": parse zones - not yet supported")
+    logger.warning(__name__ + ": parse zones - not yet supported")
 
     """
     Parse zones
@@ -463,7 +490,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse static routes
 
-    logger.log(2, __name__ + ": parse static routes")
+    logger.info(__name__ + ": parse static routes")
 
     for re_match in re.finditer("^route .*$", src_config, re.MULTILINE):
 
@@ -488,7 +515,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse network objects
 
-    logger.log(2, __name__ + ": parse network objects")
+    logger.info(__name__ + ": parse network objects")
 
     for re_match in re.finditer("object network (.*)\n(?: .*\n){1,}", src_config):
 
@@ -526,7 +553,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse network groups
 
-    logger.log(2, __name__ + ": parse network groups")
+    logger.info(__name__ + ": parse network groups")
 
     for re_match in re.finditer("object-group network (.*)\n(?: .*\n){1,}", src_config):
 
@@ -629,7 +656,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service objects
 
-    logger.log(2, __name__ + ": parse service objects")
+    logger.info(__name__ + ": parse service objects")
 
     for re_match in re.finditer("object service (.*)\n(?: .*\n){1,}", src_config):
 
@@ -724,7 +751,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse service groups
 
-    logger.log(2, __name__ + ": parse service groups")
+    logger.info(__name__ + ": parse service groups")
 
     ### need to parse object-group icmp-type
 
@@ -821,8 +848,7 @@ def parse(logger, src_config, routing_info=""):
 
                 else:
 
-                    logger.log(
-                        4,
+                    logger.error(
                         __name__
                         + ": service group operator "
                         + operator
@@ -903,8 +929,7 @@ def parse(logger, src_config, routing_info=""):
 
                     else:
 
-                        logger.log(
-                            4,
+                        logger.error(
                             __name__
                             + ": service group operator "
                             + operator
@@ -1085,7 +1110,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse firewall policies
 
-    logger.log(2, __name__ + ": parse firewall policies")
+    logger.info(__name__ + ": parse firewall policies")
 
     ## parse policy interface mappings
 
@@ -1516,7 +1541,9 @@ def parse(logger, src_config, routing_info=""):
 
             else:  ## other ACL types not supported
 
-                logger.log(3, __name__ + ": ACL type " + acl_rule[2] + " not supported")
+                logger.warning(
+                    __name__ + ": ACL type " + acl_rule[2] + " not supported"
+                )
 
                 acl_remark = ""
 
@@ -1638,7 +1665,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse NAT
 
-    logger.log(3, __name__ + ": parse NAT - not yet supported")
+    logger.warning(__name__ + ": parse NAT - not yet supported")
 
     """
     Parse NAT policies
@@ -1646,6 +1673,6 @@ def parse(logger, src_config, routing_info=""):
 
     # Return parsed data
 
-    logger.log(2, __name__ + ": parser module finished")
+    logger.info(__name__ + ": parser module finished")
 
     return data

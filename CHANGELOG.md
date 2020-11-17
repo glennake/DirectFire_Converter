@@ -137,3 +137,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Improved logging in Watchguard parser module
+
+## [0.7.2] - 2020-11-17
+
+### Added
+
+- Added traceback-with-variables to requirements
+
+### Changed
+
+- Overhaul logging across all modules and improve exception logging
+- Improved logging in Watchguard parser module
+- Improved logging in FortiGate generator module

@@ -2,12 +2,15 @@
 
 # Import modules
 
+import logger
+import sys
+from traceback_with_variables import prints_tb, LoggerAsFile
+
 import re
 
 # Import common, logging and settings
 
 import DirectFire.Converter.common as common
-from DirectFire.Converter.logging import logger
 import DirectFire.Converter.settings as settings
 
 # Initialise common functions
@@ -17,10 +20,34 @@ common.common_regex()
 interface_lookup = common.interface_lookup
 ipv4_prefix_to_mask = common.ipv4_prefix_to_mask
 
+# Initiate logging
 
-def parse(logger, src_config, routing_info=""):
+logger = logging.getLogger(__name__)
 
-    logger.log(2, __name__ + ": parser module started")
+
+# Catch exceptions and log
+
+
+@prints_tb(
+    file_=LoggerAsFile(logger),
+    num_context_lines=3,
+    max_value_str_len=9999999,
+    max_exc_str_len=9999999,
+)
+def catch_exception(exc_type, exc_value, exc_trace):
+
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
+
+
+sys.excepthook = catch_exception
+
+
+# Parser
+
+
+def parse(src_config, routing_info=""):
+
+    logger.info(__name__ + ": parser module started")
 
     # Initialise data
 
@@ -1237,7 +1264,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse system
 
-    logger.log(2, __name__ + ": parse system")
+    logger.info(__name__ + ": parse system")
 
     re_match = re.search("set system host-name (.*?)\n", src_config)
 
@@ -1246,7 +1273,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse interfaces
 
-    logger.log(2, __name__ + ": parse interfaces - not yet supported")
+    logger.info(__name__ + ": parse interfaces - not yet supported")
 
     ## physical interfaces and sub interfaces
 
@@ -1455,7 +1482,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse zones
 
-    logger.log(2, __name__ + ": parse zones - not yet supported")
+    logger.info(__name__ + ": parse zones - not yet supported")
 
     """
     Parse zones
@@ -1463,7 +1490,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse static routes
 
-    logger.log(2, __name__ + ": parse static routes")
+    logger.info(__name__ + ": parse static routes")
 
     for route_match in re.finditer(
         "set routing-options static route ("
@@ -1509,7 +1536,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv4 network objects
 
-    logger.log(2, __name__ + ": parse IPv4 network objects")
+    logger.info(__name__ + ": parse IPv4 network objects")
 
     ## host and network objects
 
@@ -1603,7 +1630,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv6 network objects
 
-    logger.log(2, __name__ + ": parse IPv6 network objects - not yet supported")
+    logger.info(__name__ + ": parse IPv6 network objects - not yet supported")
 
     """
     Parse IPv6 network objects
@@ -1611,7 +1638,7 @@ def parse(logger, src_config, routing_info=""):
 
     # Parse IPv4 network groups
 
-    logger.log(2, __name__ + ": parse IPv4 network groups - not yet supported")
+    logger.info(__name__ + ": parse IPv4 network groups - not yet supported")
 
     ## address sets with address objects
 
@@ -1725,6 +1752,6 @@ def parse(logger, src_config, routing_info=""):
 
     # Return parsed data
 
-    logger.log(2, __name__ + ": parser module finished")
+    logger.info(__name__ + ": parser module finished")
 
     return data
