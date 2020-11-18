@@ -161,3 +161,10 @@ All notable changes to this project will be documented in this file.
 
 - Fixed enhanced exception logging across several modules
 - Improved logging in Watchguard parser module
+
+## [0.7.4] - 2020-11-18
+
+### Added
+
+- Support for aliases in Watchguard parser module
+- Support for address object interface in FortiGate generator module

@@ -513,6 +513,7 @@ def parse(src_config, routing_info=""):
                 data["network_objects"][mbr_name]["type"] = "host"
                 data["network_objects"][mbr_name]["host"] = mbr_host
                 data["network_objects"][mbr_name]["description"] = ""
+                data["network_objects"][mbr_name]["interface"] = ""
 
                 data["network_groups"][grp_name]["members"].append(mbr_name)
 
@@ -527,6 +528,7 @@ def parse(src_config, routing_info=""):
                 data["network_objects"][mbr_name]["network"] = mbr_network
                 data["network_objects"][mbr_name]["mask"] = mbr_mask
                 data["network_objects"][mbr_name]["description"] = ""
+                data["network_objects"][mbr_name]["interface"] = ""
 
                 data["network_groups"][grp_name]["members"].append(mbr_name)
 
@@ -541,8 +543,86 @@ def parse(src_config, routing_info=""):
                 data["network_objects"][mbr_name]["address_first"] = mbr_address_first
                 data["network_objects"][mbr_name]["address_last"] = mbr_address_last
                 data["network_objects"][mbr_name]["description"] = ""
+                data["network_objects"][mbr_name]["interface"] = ""
 
                 data["network_groups"][grp_name]["members"].append(mbr_name)
+
+    # Parse alias - like a network group, can contain address object/group (alias-member type 1) but also another alias (alias-member type 2) which could contain an interface
+
+    logger.info(__name__ + ": parse aliases to network groups")
+
+    logger.warning(
+        __name__
+        + ": network_groups(alaises): aliases are like network groups, they can contain address object/groups but also interfaces, interface members will be converted to any address object"
+    )
+
+    src_aliases = src_config_xml.findall("./alias-list/alias")
+
+    logger.info(
+        __name__ + ": network_groups: found " + str(len(src_aliases)) + " aliases"
+    )
+
+    for alias in src_aliases:
+
+        grp_name = cleanse_names(alias.find("name").text)
+
+        logger.info(
+            __name__ + ": network_groups(alaises): parsing alias " + str(grp_name)
+        )
+
+        data["network_groups"][grp_name] = {}
+        data["network_groups"][grp_name]["type"] = "group"
+        data["network_groups"][grp_name]["description"] = alias.find("description").text
+        data["network_groups"][grp_name]["members"] = []
+
+        members = alias.findall("./alias-member-list/alias-member")
+
+        for i, member in enumerate(members):
+
+            mbr_type = member.find("type").text
+
+            if mbr_type == "1":  # user, address object/group and interface
+
+                # mbr_user = member.find("user").text
+                mbr_address = member.find("address").text
+                mbr_interface = member.find("interface").text
+
+                if mbr_address != "Any":
+                    mbr_name = mbr_address
+                else:
+                    mbr_name = mbr_interface
+
+                if mbr_name not in data["network_objects"]:
+                    data["network_objects"][mbr_name] = {}
+                    data["network_objects"][mbr_name]["type"] = "network"
+                    data["network_objects"][mbr_name]["network"] = "0.0.0.0"
+                    data["network_objects"][mbr_name]["mask"] = "0.0.0.0"
+                    data["network_objects"][mbr_name]["description"] = ""
+
+                    if mbr_interface == "Any":
+                        data["network_objects"][mbr_name]["interface"] = ""
+                    else:
+                        data["network_objects"][mbr_name]["interface"] = mbr_interface
+
+                if data["network_objects"][mbr_name]["interface"]:
+                    if i == len(members) - 1:
+                        data["network_groups"].pop(grp_name)
+                else:
+                    data["network_groups"][grp_name]["members"].append(mbr_name)
+
+            elif mbr_type == "2":  # another alias
+
+                mbr_alias_name = member.find("alias-name").text
+
+                if ".snat" in mbr_alias_name:
+                    print(i)
+                    print(str(len(members)))
+                    if i == len(members) - 1:
+                        print("toooo far!")
+                        if not data["network_groups"][grp_name]["members"]:
+                            data["network_groups"].pop(grp_name)
+                else:
+                    data["network_groups"][grp_name]["members"].append(mbr_alias_name)
 
     # Parse service groups
 

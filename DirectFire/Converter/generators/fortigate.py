@@ -212,14 +212,17 @@ def generate(parsed_data):
         dst_config.append(cfglvl1 + 'edit "' + address + '"')
 
         if attributes["type"] == "host":
-
             dst_config.append(cfglvl2 + "set type ipmask")
             dst_config.append(
                 cfglvl2 + "set subnet " + attributes["host"] + " 255.255.255.255"
             )
 
-        elif attributes["type"] == "network":
+            if attributes["interface"]:
+                dst_config.append(
+                    cfglvl2 + "set associated-interface " + attributes["interface"]
+                )
 
+        elif attributes["type"] == "network":
             dst_config.append(cfglvl2 + "set type ipmask")
             dst_config.append(
                 cfglvl2
@@ -229,11 +232,20 @@ def generate(parsed_data):
                 + attributes["mask"]
             )
 
-        elif attributes["type"] == "range":
+            if attributes["interface"]:
+                dst_config.append(
+                    cfglvl2 + "set associated-interface " + attributes["interface"]
+                )
 
+        elif attributes["type"] == "range":
             dst_config.append(cfglvl2 + "set type iprange")
             dst_config.append(cfglvl2 + "set start-ip " + attributes["address_first"])
             dst_config.append(cfglvl2 + "set end-ip " + attributes["address_last"])
+
+            if attributes["interface"]:
+                dst_config.append(
+                    cfglvl2 + "set associated-interface " + attributes["interface"]
+                )
 
         dst_config.append(cfglvl1 + "next")
 
