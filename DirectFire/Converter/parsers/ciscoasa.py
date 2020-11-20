@@ -4,7 +4,7 @@
 
 import logger
 import sys
-from traceback_with_variables import prints_tb, LoggerAsFile
+from traceback_with_variables import prints_tb, LoggerAsFile, ColorSchemes
 
 import re
 
