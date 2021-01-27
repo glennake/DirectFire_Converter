@@ -4,7 +4,6 @@
 
 import logger
 import sys
-from traceback_with_variables import prints_tb, LoggerAsFile
 
 import re
 
@@ -23,33 +22,8 @@ interface_lookup = common.interface_lookup
 
 logger = logging.getLogger(__name__)
 
-
-# Catch exceptions and log
-
-
-@prints_tb(
-    file_=LoggerAsFile(logger),
-    num_context_lines=3,
-    max_value_str_len=9999999,
-    max_exc_str_len=9999999,
-)
-def catch_exception(exc_type, exc_value, exc_trace):
-
-    sys.__excepthook__(exc_type, exc_value, exc_trace)
-
-
-sys.excepthook = catch_exception
-
-
 # Parser
 
-
-@prints_tb(
-    file_=LoggerAsFile(logger),
-    num_context_lines=3,
-    max_value_str_len=9999999,
-    max_exc_str_len=9999999,
-)
 def parse(src_config, routing_info=""):
 
     logger.info(__name__ + ": parser module started")

@@ -35,7 +35,7 @@ from datetime import datetime
 
 import logging
 
-from traceback_with_variables import activate_by_import
+from traceback_with_variables import prints_exc, LoggerAsFile
 
 # Import common and settings
 
@@ -111,7 +111,6 @@ def parse(src_format, src_config, routing_info=""):
 
     elif src_format == "watchguard":  ## WatchGuard
         from DirectFire.Converter.parsers.watchguard import parse
-
     else:
         logger.info(
             "DirectFire.Converter.parse: failed to load parser module for " + src_format
@@ -130,6 +129,7 @@ def parse(src_format, src_config, routing_info=""):
     logger.info("DirectFire.Converter.parse: completed parse of source configuration")
 
     return parsed_data
+
 
 
 def generate(dst_format, parsed_data):
@@ -173,7 +173,10 @@ def generate(dst_format, parsed_data):
 
     return dst_config
 
-
+@prints_exc(
+    file_=LoggerAsFile(logger),
+    fmt=settings.TBWV_FMT
+)
 def main(src_format, dst_format, routing_info=""):
 
     # Load source configuration file
