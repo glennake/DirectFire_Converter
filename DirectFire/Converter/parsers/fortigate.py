@@ -2,7 +2,7 @@
 
 # Import modules
 
-import logger
+import logging
 import sys
 
 import re
@@ -22,6 +22,7 @@ common.common_regex()
 logger = logging.getLogger(__name__)
 
 # Parser
+
 
 def parse(src_config, routing_info=""):
 

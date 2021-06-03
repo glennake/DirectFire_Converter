@@ -168,3 +168,11 @@ All notable changes to this project will be documented in this file.
 
 - Support for aliases in Watchguard parser module
 - Support for address object interface in FortiGate generator module
+
+## [0.7.5] - 2021-06-03
+
+### Changed
+
+- Fixed bug with logging module import in parsers
+- Fixed destination service parsing in Cisco ASA pre 8.3 parser module
+- Fixed Cisco ASA generator module failing when interface attribute missing from address object

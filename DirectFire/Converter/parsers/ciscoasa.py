@@ -2,7 +2,7 @@
 
 # Import modules
 
-import logger
+import logging
 import sys
 
 import re
@@ -23,6 +23,7 @@ interface_lookup = common.interface_lookup
 logger = logging.getLogger(__name__)
 
 # Parser
+
 
 def parse(src_config, routing_info=""):
 

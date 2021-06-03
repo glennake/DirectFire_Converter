@@ -2,7 +2,7 @@
 
 # Import modules
 
-import logger
+import logging
 import sys
 
 import re
@@ -24,6 +24,7 @@ ipv4_prefix_to_mask = common.ipv4_prefix_to_mask
 logger = logging.getLogger(__name__)
 
 # Parser
+
 
 def parse(src_config, routing_info=""):
 

@@ -2,7 +2,7 @@
 
 # Import modules
 
-import logger
+import logging
 import sys
 
 """
@@ -23,6 +23,7 @@ cleanse_names = common.cleanse_names
 logger = logging.getLogger(__name__)
 
 # Parser
+
 
 def parse(src_config, routing_info=""):
 

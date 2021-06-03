@@ -2,7 +2,7 @@
 
 # Import modules
 
-import logger
+import logging
 import sys
 
 import re
@@ -23,6 +23,7 @@ interface_lookup = common.interface_lookup
 logger = logging.getLogger(__name__)
 
 # Parser
+
 
 def parse(src_config, routing_info=""):
 
@@ -1158,12 +1159,20 @@ def parse(src_config, routing_info=""):
                 ## parse protocol
 
                 if acl_rule[4] in ["object", "object-group"]:
-                    policy["dst_services"].append(acl_rule[5])
+                    dst_service = {}
+                    dst_service["name"] = acl_rule[5]
+                    dst_service["type"] = ""  ### TO DO
+
+                    policy["dst_services"].append(dst_service)
                     policy["protocol"] = acl_rule[5]
                     i = i + 2
 
                 elif acl_rule[4] in ["ip"]:
-                    policy["dst_services"].append("any")
+                    dst_service = {}
+                    dst_service["name"] = "any"
+                    dst_service["type"] = ""  ### TO DO
+
+                    policy["dst_services"].append(dst_service)
                     policy["protocol"] = acl_rule[4]
                     i = i + 1
 

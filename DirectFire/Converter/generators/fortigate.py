@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Generator
 
+
 def generate(parsed_data):
 
     logger.info(__name__ + ": generator module started")
@@ -192,7 +193,7 @@ def generate(parsed_data):
                 cfglvl2 + "set subnet " + attributes["host"] + " 255.255.255.255"
             )
 
-            if attributes["interface"]:
+            if "interface" in attributes and attributes["interface"]:
                 dst_config.append(
                     cfglvl2 + "set associated-interface " + attributes["interface"]
                 )
@@ -207,7 +208,7 @@ def generate(parsed_data):
                 + attributes["mask"]
             )
 
-            if attributes["interface"]:
+            if "interface" in attributes and attributes["interface"]:
                 dst_config.append(
                     cfglvl2 + "set associated-interface " + attributes["interface"]
                 )
@@ -217,7 +218,7 @@ def generate(parsed_data):
             dst_config.append(cfglvl2 + "set start-ip " + attributes["address_first"])
             dst_config.append(cfglvl2 + "set end-ip " + attributes["address_last"])
 
-            if attributes["interface"]:
+            if "interface" in attributes and attributes["interface"]:
                 dst_config.append(
                     cfglvl2 + "set associated-interface " + attributes["interface"]
                 )
@@ -397,7 +398,7 @@ def generate(parsed_data):
 
     for policy_id, attributes in enumerate(parsed_data["policies"]):
 
-        logger.info(__name__ + ": policies: generating policy " + policy_id)
+        logger.info(__name__ + ": policies: generating policy " + str(policy_id))
 
         dst_config.append(cfglvl1 + "edit " + str(policy_id))
 

@@ -60,6 +60,7 @@ set security zones security-zone trust host-inbound-traffic protocols all
 set security zones security-zone trust interfaces vlan.0
 set security zones security-zone untrust address-book address GOOGLE_DNS 8.8.8.8/32
 set security zones security-zone untrust address-book address GOOGLE_DNS_NET 8.8.8.0/24
+set security zones security-zone untrust address-book address NET_10.200.68.0-23_USER_VPN 10.200.68.0/24
 set security zones security-zone untrust address-book address TEST_FQDN dns-name test.domain.com
 set security zones security-zone untrust address-book address TEST_RANGE range-address 1.1.1.1 to 1.1.1.5
 set security zones security-zone untrust address-book address TEST_RANGE description "Test Range"
