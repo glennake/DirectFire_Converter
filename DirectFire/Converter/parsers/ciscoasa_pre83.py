@@ -532,6 +532,7 @@ def parse(src_config, routing_info=""):
         route["network"] = ""
         route["source"] = []
         route["type"] = "static"
+        route["blackhole"] = False
 
         ## check if network is a name object
 
@@ -542,6 +543,12 @@ def parse(src_config, routing_info=""):
 
         else:
             route["network"] = route_config[2]
+
+        ## check if a blackhole route
+
+        if route["interface"] == "null0":
+            route["interface"] = ""
+            route["blackhole"] = True
 
         ## add to routes
 

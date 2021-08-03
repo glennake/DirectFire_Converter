@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Generator
 
+
 def generate(parsed_data):
 
     logger.info(__name__ + ": generator module started")
@@ -78,11 +79,9 @@ def generate(parsed_data):
 
     for route_id, attributes in enumerate(parsed_data["routes"]):
 
-        if attributes["gateway"] != "0.0.0.0":
+        if attributes["blackhole"] == True:
             dst_config.append(
-                "route "
-                + attributes["interface"]
-                + " "
+                "route null0 "
                 + attributes["network"]
                 + " "
                 + attributes["mask"]
@@ -91,6 +90,20 @@ def generate(parsed_data):
                 + " "
                 + attributes["distance"]
             )
+        else:
+            if attributes["gateway"] != "0.0.0.0":
+                dst_config.append(
+                    "route "
+                    + attributes["interface"]
+                    + " "
+                    + attributes["network"]
+                    + " "
+                    + attributes["mask"]
+                    + " "
+                    + attributes["gateway"]
+                    + " "
+                    + attributes["distance"]
+                )
 
     # Generate network objects
 

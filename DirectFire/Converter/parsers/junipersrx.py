@@ -1493,6 +1493,7 @@ def parse(src_config, routing_info=""):
         route["network"] = route_network
         route["mask"] = ipv4_prefix_to_mask(route_prefix)
         route["gateway"] = route_gateway
+        route["blackhole"] = False  ### need to add a check for this
 
         re_match = re.search(
             "set routing-options static route "

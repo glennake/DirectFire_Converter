@@ -162,6 +162,8 @@ def generate(parsed_data):
         dst_config.append(cfglvl2 + "set device " + attributes["interface"])
         dst_config.append(cfglvl2 + "set gateway " + attributes["gateway"])
         dst_config.append(cfglvl2 + "set distance " + attributes["distance"])
+        if attributes["blackhole"] == True:
+            dst_config.append(cfglvl2 + "set blackhole enable")
         dst_config.append(cfglvl1 + "next")
 
     dst_config.append("end")

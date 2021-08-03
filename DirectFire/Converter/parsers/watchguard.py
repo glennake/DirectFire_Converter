@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Parser
 
+
 def parse(src_config, routing_info=""):
 
     logger.info(__name__ + ": parser module started")
@@ -415,6 +416,7 @@ def parse(src_config, routing_info=""):
         route["gateway"] = interface_route_config["gateway"]
         route["interface"] = interface_route_config["interface"]
         route["distance"] = "1"
+        route["blackhole"] = False  ### need to add a check for this
 
         logger.info(
             __name__

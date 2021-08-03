@@ -87,56 +87,6 @@ def parse(src_config, routing_info=""):
     Parse zones
     """
 
-    # Parse static routes
-
-    logger.info(__name__ + ": parse static routes")
-
-    re_match = re.search("\nconfig router static\n(?:.*?)\nend", src_config, re.DOTALL)
-    routes_block = re_match.group(0).strip()
-
-    for route_match in re.finditer(
-        "    edit [0-9]{1,}\n(?:.*?)\n    next", routes_block, re.DOTALL
-    ):
-
-        route_config = route_match.group(0)
-
-        if (
-            "set virtual-wan-link enable" not in route_config
-        ):  ### need to add vwl support
-
-            route = {}
-
-            re_match = re.search(
-                "set dst ("
-                + common.common_regex.ipv4_address
-                + ") ("
-                + common.common_regex.ipv4_mask
-                + ")\n",
-                route_config,
-            )
-
-            route["network"] = re_match.group(1)
-            route["mask"] = re_match.group(2)
-
-            re_match = re.search(
-                "set gateway ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})\n",
-                route_config,
-            )
-
-            route["gateway"] = re_match.group(1)
-
-            re_match = re.search('set device "?(.*?)"?\n', route_config)
-            route["interface"] = re_match.group(1)
-
-            re_match = re.search("set distance ([0-9]{1,})\n", route_config)
-            route["distance"] = re_match.group(1)
-
-            route["source"] = []
-
-            route["type"] = "static"
-
-            data["routes"].append(route)
-
     # Parse IPv4 network objects
 
     logger.info(__name__ + ": parse IPv4 network objects")
@@ -521,6 +471,116 @@ def parse(src_config, routing_info=""):
             data["network6_groups"][network6_group_name][
                 "members"
             ] = network6_group_members
+
+    # Parse static routes
+
+    logger.info(__name__ + ": parse static routes")
+
+    re_match = re.search("\nconfig router static\n(?:.*?)\nend", src_config, re.DOTALL)
+    routes_block = re_match.group(0).strip()
+
+    for route_match in re.finditer(
+        "    edit [0-9]{1,}\n(?:.*?)\n    next", routes_block, re.DOTALL
+    ):
+
+        route_config = route_match.group(0)
+
+        if (
+            "set virtual-wan-link enable" not in route_config
+        ):  ### need to add vwl support
+
+            route = {}
+
+            group_nets = []
+
+            route["network"] = ""
+            route["mask"] = ""
+            route["gateway"] = ""
+            route["interface"] = ""
+            route["distance"] = ""
+            route["blackhole"] = False
+            route["type"] = "static"
+
+            re_match_dst = re.search(
+                "set dst ("
+                + common.common_regex.ipv4_address
+                + ") ("
+                + common.common_regex.ipv4_mask
+                + ")\n",
+                route_config,
+            )
+            if re_match_dst:
+                route["network"] = re_match_dst.group(1)
+                route["mask"] = re_match_dst.group(2)
+            else:
+                route["network"] = "0.0.0.0"
+                route["mask"] = "0.0.0.0"
+
+            re_match_dstaddr = re.search('set dstaddr "(.*)"\n', route_config,)
+            if re_match_dstaddr:
+                route_addr = re_match_dstaddr.group(1)
+                if route_addr in data["network_objects"]:
+                    ### need to add support for more network object types - e.g. range etc
+                    if data["network_objects"][route_addr]["type"] == "network":
+                        route["network"] = data["network_objects"][route_addr][
+                            "network"
+                        ]
+                        route["mask"] = data["network_objects"][route_addr]["mask"]
+                    elif data["network_objects"][route_addr]["type"] == "host":
+                        route["network"] = data["network_objects"][route_addr][
+                            "network"
+                        ]
+                        route["mask"] = data["network_objects"][route_addr]["mask"]
+
+                elif route_addr in data["network_groups"]:
+                    group_nets = data["network_groups"][route_addr]["members"]
+
+                else:
+                    logger.info(
+                        __name__
+                        + ": parse static routes: could not find "
+                        + route_addr
+                        + " in parsed network objects"
+                    )
+
+            re_match_gwy = re.search(
+                "set gateway ([0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})\n",
+                route_config,
+            )
+            if re_match_gwy:
+                route["gateway"] = re_match_gwy.group(1)
+
+            re_match_int = re.search('set device "?(.*?)"?\n', route_config)
+            if re_match_int:
+                route["interface"] = re_match_int.group(1)
+
+            re_match_bh = re.search("set blackhole enable\n", route_config)
+            if re_match_bh:
+                route["blackhole"] = True
+
+            re_match_dist = re.search("set distance ([0-9]{1,})\n", route_config)
+            if re_match_dist:
+                route["distance"] = re_match_dist.group(1)
+
+            route["source"] = []
+
+            route["type"] = "static"
+
+            if group_nets:
+                group_routes = {}
+                for member in group_nets:
+                    ### need to add support for more network object types - e.g. range etc
+                    if data["network_objects"][member]["type"] == "network":
+                        route["network"] = data["network_objects"][member]["network"]
+                        route["mask"] = data["network_objects"][member]["mask"]
+                    elif data["network_objects"][member]["type"] == "host":
+                        route["network"] = data["network_objects"][member]["network"]
+                        route["mask"] = data["network_objects"][member]["mask"]
+
+                    data["routes"].append(dict(route))
+
+            else:
+                data["routes"].append(route)
 
     # Parse service objects
 
