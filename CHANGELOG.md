@@ -176,3 +176,10 @@ All notable changes to this project will be documented in this file.
 - Fixed bug with logging module import in parsers
 - Fixed destination service parsing in Cisco ASA pre 8.3 parser module
 - Fixed Cisco ASA generator module failing when interface attribute missing from address object
+
+## [0.7.6] - 2021-08-03
+
+### Added
+
+- Support for static routes with 'dstaddr' address objects in FortiGate parser module
+- Support for blackhole route parsing/generation
