@@ -183,3 +183,15 @@ All notable changes to this project will be documented in this file.
 
 - Support for static routes with 'dstaddr' address objects in FortiGate parser module
 - Support for blackhole route parsing/generation
+
+## [0.7.7] - 2021-08-06
+
+### Added
+
+- Support for country codes containing numbers
+- Support for 'interface-subnet' address type in FortiGate parser module
+
+### Changed
+
+- Fix incorrect key for address when parsing a 'host' type in FortiGate parser module
+- Make 'addrgrp6' optional in FortiGate parser module

@@ -127,7 +127,7 @@ def parse(src_config, routing_info=""):
                 data["network_objects"][network_object_name]["type"] = "geography"
 
                 re_match = re.search(
-                    "set country (" + common.common_regex.country_code + ")\n",
+                    'set country "(' + common.common_regex.country_code + ')"\n',
                     network_object,
                 )
 
@@ -208,6 +208,46 @@ def parse(src_config, routing_info=""):
                     "address_last"
                 ] = re_match.group(1)
 
+            elif network_object_type == "interface-subnet":
+
+                re_match = re.search(
+                    "set subnet ("
+                    + common.common_regex.ipv4_address
+                    + ") ("
+                    + common.common_regex.ipv4_mask
+                    + ")\n",
+                    network_object,
+                )
+
+                if re_match:  # if a subnet is found
+
+                    network_object_network = re_match.group(
+                        1
+                    )  ### probably need to change this from interfaces IP address to subnets network address
+                    network_object_mask = re_match.group(2)
+
+                    if (
+                        network_object_mask == "255.255.255.255"
+                    ):  # if mask is 255.255.255.255 then its a host
+
+                        data["network_objects"][network_object_name]["type"] = "host"
+                        data["network_objects"][network_object_name][
+                            "network"
+                        ] = network_object_network
+                        data["network_objects"][network_object_name][
+                            "mask"
+                        ] = network_object_mask
+
+                    else:  # else its a network
+
+                        data["network_objects"][network_object_name]["type"] = "network"
+                        data["network_objects"][network_object_name][
+                            "network"
+                        ] = network_object_network
+                        data["network_objects"][network_object_name][
+                            "mask"
+                        ] = network_object_mask
+
             elif network_object_type == "mac":
 
                 data["network_objects"][network_object_name]["type"] = "mac"
@@ -255,7 +295,7 @@ def parse(src_config, routing_info=""):
 
                     data["network_objects"][network_object_name]["type"] = "host"
                     data["network_objects"][network_object_name][
-                        "network"
+                        "host"
                     ] = network_object_network
                     data["network_objects"][network_object_name][
                         "mask"
@@ -443,34 +483,35 @@ def parse(src_config, routing_info=""):
         "\nconfig firewall addrgrp6\n(?:.*?)(?:\n)?end", src_config, re.DOTALL
     )
 
-    network6_groups_block = re_match.group(0).strip()
+    if re_match:
+        network6_groups_block = re_match.group(0).strip()
 
-    for network6_group_match in re.finditer(
-        '    edit "?(.*?)"?\n(?:.*?)?\n?    next', network6_groups_block, re.DOTALL
-    ):
+        for network6_group_match in re.finditer(
+            '    edit "?(.*?)"?\n(?:.*?)?\n?    next', network6_groups_block, re.DOTALL
+        ):
 
-        network6_group = network6_group_match.group(0)
-        network6_group_name = network6_group_match.group(1)
+            network6_group = network6_group_match.group(0)
+            network6_group_name = network6_group_match.group(1)
 
-        data["network6_groups"][network6_group_name] = {}
+            data["network6_groups"][network6_group_name] = {}
 
-        data["network6_groups"][network6_group_name]["type"] = "group"
+            data["network6_groups"][network6_group_name]["type"] = "group"
 
-        re_match = re.search('set member(?: "?(?:.*?)"?){1,}\n', network6_group)
+            re_match = re.search('set member(?: "?(?:.*?)"?){1,}\n', network6_group)
 
-        if re_match:
+            if re_match:
 
-            network6_group_members = (
-                re_match.group(0)
-                .replace("set member ", "")
-                .replace('"', "")
-                .rstrip()
-                .split(" ")
-            )
+                network6_group_members = (
+                    re_match.group(0)
+                    .replace("set member ", "")
+                    .replace('"', "")
+                    .rstrip()
+                    .split(" ")
+                )
 
-            data["network6_groups"][network6_group_name][
-                "members"
-            ] = network6_group_members
+                data["network6_groups"][network6_group_name][
+                    "members"
+                ] = network6_group_members
 
     # Parse static routes
 
@@ -567,14 +608,13 @@ def parse(src_config, routing_info=""):
             route["type"] = "static"
 
             if group_nets:
-                group_routes = {}
                 for member in group_nets:
                     ### need to add support for more network object types - e.g. range etc
                     if data["network_objects"][member]["type"] == "network":
                         route["network"] = data["network_objects"][member]["network"]
                         route["mask"] = data["network_objects"][member]["mask"]
                     elif data["network_objects"][member]["type"] == "host":
-                        route["network"] = data["network_objects"][member]["network"]
+                        route["network"] = data["network_objects"][member]["host"]
                         route["mask"] = data["network_objects"][member]["mask"]
 
                     data["routes"].append(dict(route))
