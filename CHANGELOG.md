@@ -195,3 +195,14 @@ All notable changes to this project will be documented in this file.
 
 - Fix incorrect key for address when parsing a 'host' type in FortiGate parser module
 - Make 'addrgrp6' optional in FortiGate parser module
+
+## [0.7.8] - 2021-08-07
+
+### Added
+
+- Support for service objects in FortiGate parser module
+- Support for service groups in FortiGate parser module
+
+### Changed
+
+- Fix incorrect parsing of service group members with spaces in the service object name in FortiGate parser module

@@ -463,13 +463,10 @@ def parse(src_config, routing_info=""):
 
         if re_match:
 
-            network_group_members = (
-                re_match.group(0)
-                .replace("set member ", "")
-                .replace('"', "")
-                .rstrip()
-                .split(" ")
-            )
+            members = re_match.group(0)
+            members = members.replace('set member "', "").rstrip().rstrip('"')
+
+            network_group_members = members.split('" "')
 
             data["network_groups"][network_group_name][
                 "members"
@@ -501,13 +498,10 @@ def parse(src_config, routing_info=""):
 
             if re_match:
 
-                network6_group_members = (
-                    re_match.group(0)
-                    .replace("set member ", "")
-                    .replace('"', "")
-                    .rstrip()
-                    .split(" ")
-                )
+                members = re_match.group(0)
+                members = members.replace('set member "', "").rstrip().rstrip('"')
+
+                network6_group_members = members.split('" "')
 
                 data["network6_groups"][network6_group_name][
                     "members"
@@ -624,19 +618,115 @@ def parse(src_config, routing_info=""):
 
     # Parse service objects
 
-    logger.info(__name__ + ": parse service objects - not yet supported")
+    logger.info(__name__ + ": parse service objects")
 
-    """
-    Parse service objects
-    """
+    re_match = re.search(
+        "\nconfig firewall service custom\n(?:.*?)\nend", src_config, re.DOTALL
+    )
+    service_block = re_match.group(0).strip()
+
+    for service_match in re.finditer(
+        '    edit "([A-Za-z0-9-_]{1,})"\n(?:.*?)\n    next', service_block, re.DOTALL
+    ):
+
+        service_config = service_match.group(0)
+        service_name = service_match.group(1)
+
+        service = {}
+
+        service["description"] = ""
+        service["dst_port"] = ""
+        service["protocol"] = ""
+        service["src_port"] = ""
+        service["type"] = ""
+
+        re_match_comment = re.search('set comment "(.*)"\n', service_config,)
+        if re_match_comment:
+            service["description"] = re_match_comment.group(1)
+        del re_match_comment
+
+        re_match_protocol = re.search("set protocol (.*)\n", service_config,)
+        if re_match_protocol and re_match_protocol.group(1) != "TCP/UDP/SCTP":
+            protocol = re_match_protocol.group(1)
+
+            if protocol == "IP":
+                pass
+            elif protocol == "ICMP":
+                pass
+            elif protocol == "ICMP6":
+                pass
+
+            data["service_objects"][service_name] = service
+
+        else:
+            re_match_portrange = re.search(
+                "set (tcp|udp|sctp)-portrange (.*)\n", service_config,
+            )
+            if re_match_portrange:
+                service["protocol"] = re_match_portrange.group(1)
+                ports = re_match_portrange.group(2).split(" ")
+
+                if len(ports) == 1:
+                    dst_src_ports = ports[0].split(":")
+
+                    service["dst_port"] = dst_src_ports[0]
+
+                    if len(dst_src_ports) > 1:
+                        service["src_port"] = dst_src_ports[1]
+
+                    data["service_objects"][service_name] = service
+
+                else:
+                    members = []
+                    for i, p in enumerate(ports):
+                        sub_service_name = service_name + "_" + str(i + 1)
+
+                        dst_src_ports = p.split(":")
+                        service["dst_port"] = dst_src_ports[0]
+
+                        if len(dst_src_ports) > 1:
+                            service["src_port"] = dst_src_ports[1]
+
+                        data["service_objects"][sub_service_name] = dict(service)
+                        members.append(sub_service_name)
+
+                    data["service_groups"][service_name] = {}
+                    data["service_groups"][service_name]["type"] = "group"
+                    data["service_groups"][service_name]["members"] = members
 
     # Parse service groups
 
-    logger.info(__name__ + ": parse service groups - not yet supported")
+    logger.info(__name__ + ": parse service groups")
 
-    """
-    Parse service groups
-    """
+    re_match = re.search(
+        "\nconfig firewall service group\n(?:.*?)\nend", src_config, re.DOTALL
+    )
+
+    service_groups_block = re_match.group(0).strip()
+
+    for service_group_match in re.finditer(
+        '    edit "?(.*?)"?\n(?:.*?)?\n?    next', service_groups_block, re.DOTALL
+    ):
+
+        service_group = service_group_match.group(0)
+        service_group_name = service_group_match.group(1)
+
+        data["service_groups"][service_group_name] = {}
+
+        data["service_groups"][service_group_name]["type"] = "group"
+
+        re_match = re.search('set member(?: "?(?:.*?)"?){1,}\n', service_group)
+
+        if re_match:
+
+            members = re_match.group(0)
+            members = members.replace('set member "', "").rstrip().rstrip('"')
+
+            service_group_members = members.split('" "')
+
+            data["service_groups"][service_group_name][
+                "members"
+            ] = service_group_members
 
     # Parse firewall policies
 
