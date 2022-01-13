@@ -225,6 +225,15 @@ def generate(parsed_data):
                     cfglvl2 + "set associated-interface " + attributes["interface"]
                 )
 
+        elif attributes["type"] == "fqdn":
+            dst_config.append(cfglvl2 + "set type fqdn")
+            dst_config.append(cfglvl2 + "set fqdn " + attributes["fqdn"])
+
+            if "interface" in attributes and attributes["interface"]:
+                dst_config.append(
+                    cfglvl2 + "set associated-interface " + attributes["interface"]
+                )
+
         dst_config.append(cfglvl1 + "next")
 
     dst_config.append("end")

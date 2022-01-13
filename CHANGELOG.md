@@ -206,3 +206,15 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Fix incorrect parsing of service group members with spaces in the service object name in FortiGate parser module
+
+## [0.7.9] - 2022-01-13
+
+### Added
+
+- Support for range network objects in Cisco ASA parser module
+- Support for FQDN v4 network objects in Cisco ASA parser module
+- Support for FQDN network objects in FortiGate generator module
+
+### Changed
+
+- Fix incorrect parsing of host network objects group members in Cisco ASA parser module

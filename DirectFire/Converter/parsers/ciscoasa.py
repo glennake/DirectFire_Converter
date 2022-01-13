@@ -533,6 +533,25 @@ def parse(src_config, routing_info=""):
                     ] = entry_list[1]
                     data["network_objects"][network_object_name]["mask"] = entry_list[2]
 
+                elif entry_list[0] == "range":
+
+                    data["network_objects"][network_object_name]["type"] = "range"
+                    data["network_objects"][network_object_name][
+                        "address_first"
+                    ] = entry_list[1]
+                    data["network_objects"][network_object_name][
+                        "address_last"
+                    ] = entry_list[2]
+
+                elif entry_list[0] == "fqdn":
+
+                    if entry_list[1] == "v4":
+
+                        data["network_objects"][network_object_name]["type"] = "fqdn"
+                        data["network_objects"][network_object_name][
+                            "fqdn"
+                        ] = entry_list[2]
+
                 elif entry_list[0] == "description":
 
                     data["network_objects"][network_object_name]["description"] = entry[
@@ -573,12 +592,31 @@ def parse(src_config, routing_info=""):
 
             if network_object[0] == "network-object":
 
-                if network_object[1] == "object":  ## is object member
+                if network_object[1] == "object":  ## is object group member
 
                     ## add network object to the group
 
                     data["network_groups"][network_group_name]["members"].append(
                         network_object[2]
+                    )
+
+                elif network_object[1] == "host":  ## is object host member
+
+                    network_object_name = network_object[2]
+
+                    if network_object_name not in data["network_objects"]:
+
+                        data["network_objects"][network_object_name] = {}
+                        data["network_objects"][network_object_name]["type"] = "host"
+                        data["network_objects"][network_object_name][
+                            "host"
+                        ] = network_object[2]
+                        data["network_objects"][network_object_name]["description"] = ""
+
+                    ## add network host to the group
+
+                    data["network_groups"][network_group_name]["members"].append(
+                        network_object_name
                     )
 
                 else:  ## is directly defined
