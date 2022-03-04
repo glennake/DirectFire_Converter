@@ -218,3 +218,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Fix incorrect parsing of host network objects group members in Cisco ASA parser module
+
+## [0.8.0] - 2022-03-04
+
+### Added
+
+- Initial support for parsing Netscreen

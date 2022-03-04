@@ -51,7 +51,14 @@ arg_parser.add_argument("-c", "--config", help="/full/path/to/config", required=
 arg_parser.add_argument(
     "-s",
     "--source",
-    choices=["ciscoasa", "ciscoasa_pre83", "fortigate", "junipersrx", "watchguard"],
+    choices=[
+        "ciscoasa",
+        "ciscoasa_pre83",
+        "fortigate",
+        "junipersrx",
+        "netscreen",
+        "watchguard",
+    ],
     help="source format",
     required=True,
 )
@@ -109,6 +116,9 @@ def parse(src_format, src_config, routing_info=""):
     elif src_format == "junipersrx":  ## Juniper SRX (JunOS)
         from DirectFire.Converter.parsers.junipersrx import parse
 
+    elif src_format == "netscreen":  ## Juniper Netscreen (ScreenOS)
+        from DirectFire.Converter.parsers.netscreen import parse
+
     elif src_format == "watchguard":  ## WatchGuard
         from DirectFire.Converter.parsers.watchguard import parse
     else:
@@ -129,7 +139,6 @@ def parse(src_format, src_config, routing_info=""):
     logger.info("DirectFire.Converter.parse: completed parse of source configuration")
 
     return parsed_data
-
 
 
 def generate(dst_format, parsed_data):
@@ -173,10 +182,8 @@ def generate(dst_format, parsed_data):
 
     return dst_config
 
-@prints_exc(
-    file_=LoggerAsFile(logger),
-    fmt=settings.TBWV_FMT
-)
+
+@prints_exc(file_=LoggerAsFile(logger), fmt=settings.TBWV_FMT)
 def main(src_format, dst_format, routing_info=""):
 
     # Load source configuration file

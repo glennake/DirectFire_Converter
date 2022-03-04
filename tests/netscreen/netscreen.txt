@@ -1,0 +1,321 @@
+unset key protection enable
+set clock ntp
+set clock timezone -7
+set clock dst recurring start-weekday 2 0 3 02:00 end-weekday 1 0 11 02:00
+set vrouter trust-vr sharable
+set vrouter "untrust-vr"
+exit
+set vrouter "trust-vr"
+unset auto-route-export
+exit
+set service "RDP-KCServer01" protocol tcp src-port 0-65535 dst-port 3389-3389
+set service "iLo" protocol tcp src-port 0-65535 dst-port 443-443
+set service "iLo" + tcp src-port 0-65535 dst-port 4443-4443
+set service "RDP_58009Port" protocol tcp src-port 0-65535 dst-port 58009-58009
+set service "RDP_58009Port" + tcp src-port 0-65535 dst-port 3389-3389
+set service "SpiceWorks" protocol tcp src-port 0-65535 dst-port 9676-9676
+set service "SpiceworksMaintenance" protocol tcp src-port 0-65535 dst-port 9677-9677
+set alg appleichat enable
+unset alg appleichat re-assembly enable
+set alg sctp enable
+set auth-server "Local" id 0
+set auth-server "Local" server-name "Local"
+set auth default auth server "Local"
+set auth radius accounting port 1646
+set admin name "admin"
+set admin password "nrieunfuienriufnreuifner9348038034083"
+set admin manager-ip 192.168.1.1 255.255.255.0
+set admin manager-ip 1.2.3.0 255.255.255.248
+set admin port 8088
+set admin http redirect
+set admin auth web timeout 10
+set admin auth dial-in timeout 3
+set admin auth server "Local"
+set admin format dos
+set zone "Trust" vrouter "trust-vr"
+set zone "Untrust" vrouter "trust-vr"
+set zone "DMZ" vrouter "trust-vr"
+set zone "VLAN" vrouter "trust-vr"
+set zone id 100 "Kerby_Guest_WiFi"
+set zone "Untrust-Tun" vrouter "trust-vr"
+set zone "Trust" tcp-rst
+set zone "Untrust" block
+unset zone "Untrust" tcp-rst
+unset zone "V1-Trust" tcp-rst
+unset zone "V1-Untrust" tcp-rst
+set zone "DMZ" tcp-rst
+unset zone "V1-DMZ" tcp-rst
+unset zone "VLAN" tcp-rst
+set zone "Kerby_Guest_WiFi" tcp-rst
+set zone "Kerby_Guest_WiFi" no-dhcp-relay
+set zone "Trust" screen icmp-flood
+set zone "Trust" screen udp-flood
+set zone "Trust" screen winnuke
+set zone "Trust" screen port-scan
+set zone "Trust" screen ip-sweep
+set zone "Trust" screen tear-drop
+set zone "Trust" screen syn-flood
+set zone "Trust" screen ip-spoofing
+set zone "Trust" screen ping-death
+set zone "Trust" screen ip-filter-src
+set zone "Trust" screen land
+set zone "Trust" screen syn-frag
+set zone "Trust" screen tcp-no-flag
+set zone "Trust" screen unknown-protocol
+set zone "Trust" screen ip-bad-option
+set zone "Trust" screen ip-record-route
+set zone "Trust" screen ip-timestamp-opt
+set zone "Trust" screen ip-security-opt
+set zone "Trust" screen ip-loose-src-route
+set zone "Trust" screen ip-strict-src-route
+set zone "Trust" screen ip-stream-opt
+set zone "Trust" screen icmp-fragment
+set zone "Trust" screen icmp-large
+set zone "Trust" screen syn-fin
+set zone "Trust" screen fin-no-ack
+set zone "Trust" screen limit-session source-ip-based
+set zone "Trust" screen syn-ack-ack-proxy
+set zone "Trust" screen block-frag
+set zone "Trust" screen limit-session destination-ip-based
+set zone "Trust" screen icmp-id
+set zone "Trust" screen ip-spoofing drop-no-rpf-route
+set zone "Untrust" screen icmp-flood
+set zone "Untrust" screen udp-flood
+set zone "Untrust" screen winnuke
+set zone "Untrust" screen port-scan
+set zone "Untrust" screen ip-sweep
+set zone "Untrust" screen tear-drop
+set zone "Untrust" screen syn-flood
+set zone "Untrust" screen ip-spoofing
+set zone "Untrust" screen ping-death
+set zone "Untrust" screen ip-filter-src
+set zone "Untrust" screen land
+set zone "Untrust" screen syn-frag
+set zone "Untrust" screen tcp-no-flag
+set zone "Untrust" screen unknown-protocol
+set zone "Untrust" screen ip-bad-option
+set zone "Untrust" screen ip-record-route
+set zone "Untrust" screen ip-timestamp-opt
+set zone "Untrust" screen ip-security-opt
+set zone "Untrust" screen ip-loose-src-route
+set zone "Untrust" screen ip-strict-src-route
+set zone "Untrust" screen ip-stream-opt
+set zone "Untrust" screen icmp-fragment
+set zone "Untrust" screen icmp-large
+set zone "Untrust" screen syn-fin
+set zone "Untrust" screen fin-no-ack
+set zone "Untrust" screen limit-session source-ip-based
+set zone "Untrust" screen syn-ack-ack-proxy
+set zone "Untrust" screen block-frag
+set zone "Untrust" screen limit-session destination-ip-based
+set zone "Untrust" screen icmp-id
+set zone "Untrust" screen ip-spoofing drop-no-rpf-route
+set zone "V1-Untrust" screen tear-drop
+set zone "V1-Untrust" screen syn-flood
+set zone "V1-Untrust" screen ping-death
+set zone "V1-Untrust" screen ip-filter-src
+set zone "V1-Untrust" screen land
+set zone "DMZ" screen icmp-flood
+set zone "DMZ" screen udp-flood
+set zone "DMZ" screen winnuke
+set zone "DMZ" screen port-scan
+set zone "DMZ" screen ip-sweep
+set zone "DMZ" screen tear-drop
+set zone "DMZ" screen syn-flood
+set zone "DMZ" screen ip-spoofing
+set zone "DMZ" screen ping-death
+set zone "DMZ" screen ip-filter-src
+set zone "DMZ" screen land
+set zone "DMZ" screen syn-frag
+set zone "DMZ" screen tcp-no-flag
+set zone "DMZ" screen unknown-protocol
+set zone "DMZ" screen ip-bad-option
+set zone "DMZ" screen ip-record-route
+set zone "DMZ" screen ip-timestamp-opt
+set zone "DMZ" screen ip-security-opt
+set zone "DMZ" screen ip-loose-src-route
+set zone "DMZ" screen ip-strict-src-route
+set zone "DMZ" screen ip-stream-opt
+set zone "DMZ" screen icmp-fragment
+set zone "DMZ" screen icmp-large
+set zone "DMZ" screen syn-fin
+set zone "DMZ" screen fin-no-ack
+set zone "DMZ" screen limit-session source-ip-based
+set zone "DMZ" screen syn-ack-ack-proxy
+set zone "DMZ" screen block-frag
+set zone "DMZ" screen limit-session destination-ip-based
+set zone "DMZ" screen icmp-id
+set zone "DMZ" screen ip-spoofing drop-no-rpf-route
+set interface "ethernet0/0" zone "Untrust"
+set interface "ethernet0/1" zone "DMZ"
+set interface "ethernet1/1.5" tag 5 zone "Trust"
+set interface "ethernet0/6" zone "Kerby_Guest_WiFi"
+set interface "bgroup0" zone "Trust"
+set interface bgroup0 port ethernet0/2
+unset interface vlan1 ip
+set interface ethernet0/0 ip 1.2.3.4/29
+set interface ethernet0/0 route
+set interface ethernet0/1 ip 192.168.100.1/24
+set interface ethernet0/1 route
+set interface ethernet1/1.5 ip 10.10.10.1/24
+set interface ethernet1/1.5 route
+set interface ethernet0/6 ip 172.16.0.1/16
+set interface ethernet0/6 nat
+set interface bgroup0 ip 192.168.1.1/24
+set interface bgroup0 route
+set interface bgroup0 proxy dns
+unset interface vlan1 bypass-others-ipsec
+unset interface vlan1 bypass-non-ip
+set interface ethernet0/0 ip manageable
+set interface ethernet0/1 ip manageable
+set interface ethernet1/1.5 ip manageable
+set interface ethernet1/1.5 disable
+unset interface ethernet0/6 ip manageable
+set interface bgroup0 ip manageable
+set interface ethernet0/0 manage ping
+set interface ethernet0/0 manage ssl
+set interface ethernet0/0 manage web
+set interface bgroup0 manage mtrace
+set interface ethernet0/0 vip interface-ip 3389 "RDP-KCServer01" 192.168.1.2
+set interface ethernet0/0 vip interface-ip 80 "HTTP" 192.168.1.4
+set interface ethernet0/0 vip interface-ip 25 "MAIL" 192.168.1.40
+set interface ethernet0/0 vip interface-ip 443 "HTTPS" 192.168.1.4
+set interface ethernet0/0 vip interface-ip 9676 "SpiceWorks" 192.168.1.6
+set interface ethernet0/0 vip interface-ip 4443 "iLo" 192.168.1.230
+set interface ethernet0/0 vip interface-ip 9677 "SpiceworksMaintenance" 192.168.1.5
+set interface ethernet0/6 dhcp server service
+set interface ethernet0/6 dhcp server enable
+set interface ethernet0/6 dhcp server option gateway 172.16.0.1
+set interface ethernet0/6 dhcp server option netmask 255.255.0.0
+set interface ethernet0/6 dhcp server option dns1 8.8.8.8
+set interface ethernet0/6 dhcp server option dns2 8.8.4.4
+set interface ethernet0/6 dhcp server ip 172.16.0.2 to 172.16.0.254
+unset interface ethernet0/6 dhcp server config next-server-ip
+unset interface ethernet0/6 dhcp server config updatable
+set interface "serial0/0" modem settings "USR" init "AT&F"
+set interface "serial0/0" modem settings "USR" active
+set interface "serial0/0" modem speed 115200
+set interface "serial0/0" modem retry 3
+set interface "serial0/0" modem interval 10
+set interface "serial0/0" modem idle-time 10
+set flow tcp-mss
+unset flow tcp-syn-check
+unset flow tcp-syn-bit-check
+set flow reverse-route clear-text prefer
+set flow reverse-route tunnel always
+set hostname MYSSG01
+set domain domain.local
+set pki authority default scep mode "auto"
+set pki x509 default cert-path partial
+set dns host dns1 64.59.135.133 src-interface ethernet0/0
+set dns host dns2 64.59.135.135 src-interface ethernet0/0
+set dns host dns3 0.0.0.0
+set dns host schedule 00:00
+set address "Trust" "1.2.3.4/32" 1.2.3.4 255.255.255.255
+set address "Trust" "192.168.1.2/32" 192.168.1.2 255.255.255.255
+set address "Trust" "192.168.1.4/32" 192.168.1.4 255.255.255.255
+set address "Trust" "192.168.1.40/32" 192.168.1.40 255.255.255.255
+set address "Trust" "192.168.1.68/32" 192.168.1.68 255.255.255.255
+set address "Trust" "Lan" 192.168.1.0 255.255.255.0
+set address "Untrust" "1.2.3.0/29" 1.2.3.0 255.255.255.248
+set address "DMZ" "DMZ LAN" 192.168.100.0 255.255.255.0
+set crypto-policy
+exit
+set ike respond-bad-spi 1
+set ike ikev2 ike-sa-soft-lifetime 60
+unset ike ikeid-enumeration
+unset ike dos-protection
+unset ipsec access-session enable
+set ipsec access-session maximum 5000
+set ipsec access-session upper-threshold 0
+set ipsec access-session lower-threshold 0
+set ipsec access-session dead-p2-sa-timeout 0
+unset ipsec access-session log-error
+unset ipsec access-session info-exch-connected
+unset ipsec access-session use-error-log
+set arp nat-dst
+set url protocol websense
+exit
+set policy id 42 from "DMZ" to "Untrust" "Any" "Any" "ANY" permit log
+set policy id 42
+exit
+set policy id 33 name "Barracuda Allow SMTP OUT" from "Trust" to "Untrust" "192.168.1.40/32" "Any" "SMTP" nat src permit log
+set policy id 33
+exit
+set policy id 34 name "Barracuda Allow SMTP OUT" from "Trust" to "Untrust" "Any" "Any" "SMTP" nat src deny log
+set policy id 34
+exit
+set policy id 1 from "Trust" to "Untrust" "Any" "Any" "ANY" nat src permit log
+set policy id 1
+exit
+set policy id 48 from "Untrust" to "DMZ" "1.2.3.0/29" "VIP(ethernet0/0)" "RDP-KCServer01" permit log
+set policy id 48
+exit
+set policy id 49 from "Untrust" to "DMZ" "Any" "VIP(ethernet0/0)" "RDP-KCServer01" deny log
+set policy id 49
+exit
+set policy id 41 from "Untrust" to "DMZ" "Any" "VIP(ethernet0/0)" "ANY" permit log
+set policy id 41
+exit
+set policy id 43 from "Kerby_Guest_WiFi" to "Kerby_Guest_WiFi" "Any" "Any" "ANY" permit log
+set policy id 43
+exit
+set policy id 45 name "BLOCK SMTP Outbound" from "Kerby_Guest_WiFi" to "Untrust" "Any" "Any" "SMTP" nat src deny log
+set policy id 45
+exit
+set policy id 44 from "Kerby_Guest_WiFi" to "Untrust" "Any" "Any" "ANY" nat src permit log
+set policy id 44
+exit
+set policy id 38 from "Untrust" to "Trust" "1.2.3.0/29" "VIP(ethernet0/0)" "RDP_58009Port" permit log
+set policy id 38
+exit
+set policy global id 23 from "Global" to "Global" "Any" "Any" "ANY" deny log
+set policy id 23
+exit
+set policy id 24 from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "HTTP" permit log
+set policy id 24
+set service "HTTPS"
+set service "ICMP-ANY"
+exit
+set policy id 25 name "Email" from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "SMTP" permit log
+set policy id 25
+exit
+set policy id 26 from "Untrust" to "Trust" "1.2.3.0/29" "VIP(ethernet0/0)" "RDP-KCServer01" permit log
+set policy id 26
+exit
+set policy id 29 name "SSH_ACCESS_FROM_USERFUL_ORG" from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "SSH" permit log
+set policy id 29
+exit
+set policy id 39 from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "iLo" permit log
+set policy id 39
+exit
+set policy id 46 from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "SpiceWorks" permit log
+set policy id 46
+exit
+set policy id 47 from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "SpiceworksMaintenance" permit log
+set policy id 47
+exit
+set nsmgmt bulkcli reboot-timeout 60
+set ssh version v2
+set config lock timeout 5
+unset license-key auto-update
+set telnet client enable
+set ssl port 8443
+set ssl encrypt 3des sha-1
+set ntp server "ca.pool.ntp.org "
+set ntp server backup1 "us.pool.ntp.org "
+set ntp interval 60
+set ntp max-adjustment 10
+set snmp port listen 161
+set snmp port trap 162
+set snmpv3 local-engine id "0162072007002899"
+set vrouter "untrust-vr"
+exit
+set vrouter "trust-vr"
+unset add-default-route
+set route 0.0.0.0/0 interface ethernet0/0 gateway 1.2.3.1
+exit
+set vrouter "untrust-vr"
+exit
+set vrouter "trust-vr"
+exit

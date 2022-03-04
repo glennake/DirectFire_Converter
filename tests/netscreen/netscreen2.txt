@@ -1,0 +1,161 @@
+set clock ntp
+set clock timezone -6
+set vrouter trust-vr sharable
+set vrouter "untrust-vr"
+exit
+set vrouter "trust-vr"
+unset auto-route-export
+exit
+set service "RDC" protocol tcp src-port 0-65535 dst-port 3389-3389
+set service "pcAnywhere1" protocol tcp src-port 0-65535 dst-port 5631-5632
+set service "pcAnywhere1" + udp src-port 0-65535 dst-port 5631-5632
+set service "Upluad" protocol tcp src-port 0-65535 dst-port 85-85
+set service "IP5060" protocol tcp src-port 0-65535 dst-port 5060-5060
+set service "IP5061" protocol tcp src-port 0-65535 dst-port 5061-5061
+unset alg sip enable
+set auth-server "Local" id 0
+set auth-server "Local" server-name "Local"
+set auth default auth server "Local"
+set auth radius accounting port 1646
+set admin name "admin"
+set admin port 8080
+set admin auth timeout 10
+set admin auth server "Local"
+set admin format dos
+set zone "Trust" vrouter "trust-vr"
+set zone "Untrust" vrouter "trust-vr"
+set zone "DMZ" vrouter "trust-vr"
+set zone "VLAN" vrouter "trust-vr"
+set zone "Untrust-Tun" vrouter "trust-vr"
+set zone "Trust" tcp-rst
+set zone "Untrust" block
+unset zone "Untrust" tcp-rst
+set zone "DMZ" tcp-rst
+set zone "VLAN" block
+unset zone "VLAN" tcp-rst
+set zone "Untrust" screen tear-drop
+set zone "Untrust" screen syn-flood
+set zone "Untrust" screen ping-death
+set zone "Untrust" screen ip-filter-src
+set zone "Untrust" screen land
+set zone "V1-Untrust" screen tear-drop
+set zone "V1-Untrust" screen syn-flood
+set zone "V1-Untrust" screen ping-death
+set zone "V1-Untrust" screen ip-filter-src
+set zone "V1-Untrust" screen land
+set interface "ethernet0/0" zone "Untrust"
+set interface "ethernet0/1" zone "DMZ"
+set interface "bgroup0" zone "Trust"
+set interface bgroup0 port ethernet0/2
+set interface bgroup0 port ethernet0/3
+set interface bgroup0 port ethernet0/4
+set interface bgroup0 port ethernet0/5
+set interface bgroup0 port ethernet0/6
+unset interface vlan1 ip
+set interface ethernet0/0 ip 192.168.11.61/30
+set interface ethernet0/0 route
+set interface ethernet0/1 ip 172.16.10.1/16
+set interface ethernet0/1 nat
+set interface bgroup0 ip 10.10.10.1/24
+set interface bgroup0 nat
+unset interface vlan1 bypass-others-ipsec
+unset interface vlan1 bypass-non-ip
+set interface ethernet0/0 ip manageable
+set interface ethernet0/1 ip manageable
+set interface bgroup0 ip manageable
+set interface ethernet0/0 manage ping
+set interface ethernet0/0 manage ssh
+set interface ethernet0/0 manage ssl
+set interface ethernet0/0 manage mtrace
+set interface bgroup0 manage mtrace
+set interface ethernet0/0 vip untrust 3389 "RDC" 10.10.10.10
+set interface ethernet0/0 vip untrust 85 "Upluad" 10.10.10.10
+set interface ethernet0/0 vip untrust 5631 "pcAnywhere1" 10.10.10.10
+set interface ethernet0/0 vip untrust 80 "HTTP" 10.10.10.10
+set interface ethernet0/0 vip untrust 5060 "IP5060" 10.10.10.176
+set interface ethernet0/0 vip untrust 5061 "IP5061" 10.10.10.169
+set interface bgroup0 dhcp server service
+set interface bgroup0 dhcp server auto
+set interface bgroup0 dhcp server option domainname chicagotech.net
+set interface bgroup0 dhcp server option dns1 4.2.2.1
+set interface bgroup0 dhcp server option dns2 4.2.2.1
+set interface bgroup0 dhcp server ip 10.10.10.11 to 10.10.10.200
+unset interface bgroup0 dhcp server config next-server-ip
+set interface "serial0/0" modem settings "USR" init "AT&F"
+set interface "serial0/0" modem settings "USR" active
+set interface "serial0/0" modem speed 115200
+set interface "serial0/0" modem retry 3
+set interface "serial0/0" modem interval 10
+set interface "serial0/0" modem idle-time 10
+set flow tcp-mss
+unset flow tcp-syn-check
+set domain domain.local
+set pki authority default scep mode "auto"
+set pki x509 default cert-path partial
+set address "Trust" "0.0.0.0/0" 0.0.0.0 0.0.0.0
+set address "Trust" "10.10.10.10/24" 10.10.10.10 255.255.255.0
+set address "Trust" "10.10.10.10/255.255.255.255" 10.10.10.10 255.255.255.255
+set address "Trust" "10.10.10.10/32" 10.10.10.10 255.255.255.255
+set address "Trust" "phone ip1" 10.10.10.169 255.255.255.255
+set address "Trust" "phone ip2" 10.10.10.176 255.255.255.255
+set group address "Trust" "phone ips"
+set group address "Trust" "phone ips" add "phone ip1"
+set group address "Trust" "phone ips" add "phone ip2"
+set ike respond-bad-spi 1
+unset ike ikeid-enumeration
+unset ike dos-protection
+unset ipsec access-session enable
+set ipsec access-session maximum 5000
+set ipsec access-session upper-threshold 0
+set ipsec access-session lower-threshold 0
+set ipsec access-session dead-p2-sa-timeout 0
+unset ipsec access-session log-error
+unset ipsec access-session info-exch-connected
+unset ipsec access-session use-error-log
+set url protocol websense
+exit
+set policy id 13 from "Trust" to "Untrust" "phone ips" "Any" "ANY" permit log traffic priority 0
+set policy id 13
+exit
+set policy id 7 from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "RDC" permit log
+set policy id 7
+exit
+set policy id 5 from "Untrust" to "Trust" "Any" "0.0.0.0/0" "MGCP" permit
+set policy id 5
+exit
+set policy id 1 from "Trust" to "Untrust" "Any" "Any" "ANY" permit
+set policy id 1
+exit
+set policy id 8 name "pcAnywhere" from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "pcAnywhere1" permit
+set policy id 8
+exit
+set policy id 9 name "Upload" from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "Upluad" permit
+set policy id 9
+exit
+set policy id 10 name "http" from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "HTTP" permit
+set policy id 10
+exit
+set policy id 11 name "IPPhone" from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "IP5060" permit
+set policy id 11
+exit
+set policy id 12 name "IP5061" from "Untrust" to "Trust" "Any" "VIP(ethernet0/0)" "IP5061" permit
+set policy id 12
+exit
+set nsmgmt bulkcli reboot-timeout 60
+set ssh version v2
+set config lock timeout 5
+set ntp server "0.0.0.0"
+set ntp server backup1 "0.0.0.0"
+set ntp server backup2 "0.0.0.0"
+set snmp port listen 161
+set snmp port trap 162
+set vrouter "untrust-vr"
+exit
+set vrouter "trust-vr"
+unset add-default-route
+set route 0.0.0.0/0 interface ethernet0/0 gateway 192.168.11.62 preference 20
+exit
+set vrouter "untrust-vr"
+exit
+set vrouter "trust-vr"
+exit
