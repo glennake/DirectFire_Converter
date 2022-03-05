@@ -236,3 +236,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Improved import of predefined services for Netscreen parser module
+
+## [0.8.2] - 2022-03-05
+
+### Added
+
+- Support for network and network groups in Netscreen parser module

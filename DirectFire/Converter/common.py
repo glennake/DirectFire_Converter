@@ -25,7 +25,11 @@ def cleanse_names(name):
 def common_regex():
 
     common_regex.country_code = "(?:[A-Z0-9]{2})"
-    common_regex.fqdn = "(.*?)"
+    # common_regex.fqdn = "(.*?)"
+    common_regex.fqdn = (
+        "(?=.{4,253}$)(?:(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63})"
+    )
+    common_regex.fqdn_no_tld = "(?=.{1,253}$)(?:(?:((?!-)[a-zA-Z0-9-]{1,63}(?<!-))|(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}))"
     # common_regex.ipv4 = "(?:[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3})"
     common_regex.ipv4_address = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
     common_regex.ipv4_prefix = "(?:\/(?:[0-9]|[1-2][0-9]|3[0-2]))"

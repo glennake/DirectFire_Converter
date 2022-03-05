@@ -67,17 +67,6 @@ def parse(src_config, routing_info=""):
 
     # Predefined service objects
 
-    def _add_service_object(
-        description, dst_ports, name, protocols, src_ports, timeout, type,
-    ):
-        data["service_objects"][name] = {}
-        data["service_objects"][name]["description"] = description
-        data["service_objects"][name]["dst_ports"] = dst_ports
-        data["service_objects"][name]["protocols"] = protocols
-        data["service_objects"][name]["src_ports"] = src_ports
-        data["service_objects"][name]["timeout"] = timeout
-        data["service_objects"][name]["type"] = type
-
     filepath_predefined_services = (
         f"{settings.BASE_DIR}/resources/netscreen/predefined_services.csv"
     )
@@ -95,15 +84,14 @@ def parse(src_config, routing_info=""):
                 protocols = row[1]
                 timeout = "" if row[4] == "default" else int(row[4]) * 60
 
-                _add_service_object(
-                    description="",
-                    dst_ports=[dst_ports],
-                    name=name,
-                    protocols=[protocols],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-                    src_ports=[],
-                    timeout=timeout,  # seconds
-                    type="v2",
-                )
+                data["service_objects"][name] = {
+                    "description": "",
+                    "dst_ports": [dst_ports],
+                    "protocols": [protocols],
+                    "src_ports": [],
+                    "timeout": timeout,
+                    "type": "v2",
+                }
 
     # Parse system
 
@@ -260,17 +248,90 @@ def parse(src_config, routing_info=""):
 
     logger.info(__name__ + ": parse static routes")
 
-    """
-    Parse static routes
-    """
+    for re_static_route in re.finditer(
+        "^set route ("
+        + common.common_regex.ipv4_address
+        + ")("
+        + common.common_regex.ipv4_prefix
+        + ") interface (.*?)(?: gateway ("
+        + common.common_regex.ipv4_address
+        + "))?(?: preference ([0-9]{1,3}))?$",
+        src_config,
+        re.MULTILINE,
+    ):  ## add support for vrouter? e.g. set vrouter untrust-vr route ...
+
+        route_prefix = re_static_route.group(2)
+
+        route = {
+            "blackhole": False,  ### need to add a check for this
+            "description": "",
+            "distance": re_static_route.group(5) or "20",
+            "enabled": True,
+            "gateway": re_static_route.group(4) or "",
+            "interface": re_static_route.group(3),
+            "mask": ipv4_prefix_to_mask(route_prefix),
+            "network": re_static_route.group(1),
+            "type": "static",
+        }
+
+        data["routes"].append(route)
 
     # Parse IPv4 network objects
 
     logger.info(__name__ + ": parse IPv4 network objects")
 
-    """
-    Parse IPv4 network objects
-    """
+    for re_address in re.finditer(
+        "^set address (.*?) (.*?) ("
+        + common.common_regex.ipv4_address
+        + ") ("
+        + common.common_regex.ipv4_mask
+        + ")$",
+        src_config,
+        re.MULTILINE,
+    ):
+
+        zone = re_address.group(1).replace('"', "")
+        obj_name = re_address.group(2).replace('"', "")
+        network = re_address.group(3)
+        mask = re_address.group(4)
+
+        net_obj = {
+            "description": "",
+            "interface": "",
+            "type": "network",
+        }
+
+        if mask == "255.255.255.255":
+
+            net_obj["host"] = network
+            net_obj["type"] = "host"
+
+        else:
+
+            net_obj["mask"] = mask
+            net_obj["network"] = network
+
+        data["network_objects"][obj_name] = net_obj
+
+    for re_address in re.finditer(
+        "^set address (.*?) (.*?) (" + common.common_regex.fqdn + ")$",
+        src_config,
+        re.MULTILINE,
+    ):
+
+        zone = re_address.group(1).replace('"', "")
+        obj_name = re_address.group(2).replace('"', "")
+        fqdn = re_address.group(3)
+
+        net_obj = {
+            "description": "",
+            "interface": "",
+            "type": "fqdn",
+        }
+
+        net_obj["fqdn"] = fqdn
+
+        data["network_objects"][obj_name] = net_obj
 
     # Parse IPv6 network objects
 
@@ -284,9 +345,19 @@ def parse(src_config, routing_info=""):
 
     logger.info(__name__ + ": parse IPv4 network groups")
 
-    """
-    Parse IPv4 network groups
-    """
+    for re_group in re.finditer(
+        "^set group address (.*?) (.*?) add (.*?)$", src_config, re.MULTILINE,
+    ):
+
+        zone = re_group.group(1).replace('"', "")
+        obj_name = re_group.group(2).replace('"', "")
+        member = re_group.group(3).replace('"', "")
+
+        if obj_name not in data["network_groups"]:
+            grp_obj = {"description": "", "members": [], "type": "group"}
+            data["network_groups"][obj_name] = grp_obj
+
+        data["network_groups"][obj_name]["members"].append(member)
 
     # Parse IPv6 network groups
 

@@ -222,6 +222,18 @@ set address "Trust" "192.168.1.40/32" 192.168.1.40 255.255.255.255
 set address "Trust" "192.168.1.68/32" 192.168.1.68 255.255.255.255
 set address "Trust" "Lan" 192.168.1.0 255.255.255.0
 set address "Untrust" "1.2.3.0/29" 1.2.3.0 255.255.255.248
+set address "Untrust" "juniper" www.juniper.net
+set address "Untrust" "windows_update1" windowsupdate.microsoft.com
+set address "Untrust" "windows_update2" update.microsoft.com
+set address "Untrust" "windows_update3" download.windowsupdate.com
+set address "Untrust" "windows_update4" www.update.microsoft.com
+set address "Untrust" "windows_update5" c.microsoft.com
+set group address "Untrust" "Windows_update_grp"
+set group address "Untrust" "Windows_update_grp" add "windows_update1"
+set group address "Untrust" "Windows_update_grp" add "windows_update2"
+set group address "Untrust" "Windows_update_grp" add "windows_update3"
+set group address "Untrust" "Windows_update_grp" add "windows_update4"
+set group address "Untrust" "Windows_update_grp" add "windows_update5"
 set address "DMZ" "DMZ LAN" 192.168.100.0 255.255.255.0
 set crypto-policy
 exit
@@ -240,6 +252,8 @@ unset ipsec access-session use-error-log
 set arp nat-dst
 set url protocol websense
 exit
+set policy from "Trust" to "Untrust" "any" "juniper" "HTTP" permit
+set policy from "Trust" to "Untrust" "any" "Windows_update_grp" "HTTP" permit
 set policy id 42 from "DMZ" to "Untrust" "Any" "Any" "ANY" permit log
 set policy id 42
 exit
@@ -318,6 +332,8 @@ exit
 set vrouter "trust-vr"
 unset add-default-route
 set route 0.0.0.0/0 interface ethernet0/0 gateway 1.2.3.1
+set route 0.0.0.0/0 interface ethernet0/0 gateway 1.2.3.2 preference 200
+set route 10.0.0.0/16 interface ethernet1/1.5
 exit
 set vrouter "untrust-vr"
 exit
