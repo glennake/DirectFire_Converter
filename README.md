@@ -19,6 +19,10 @@ This tool will attempt to convert configurations from one firewall type to anoth
 
 https://github.com/glennake/DirectFire_Converter/wiki/Getting-Started
 
+## Firewall Support
+
+https://github.com/glennake/DirectFire_Converter/wiki/Firewall-Support
+
 ## Changelog
 
 https://github.com/glennake/DirectFire_Converter/blob/master/CHANGELOG.md
