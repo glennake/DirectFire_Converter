@@ -333,7 +333,7 @@ def generate(parsed_data):
                     cfglvl2 + "set protocol-number " + attributes["protocol"]
                 )
 
-        if attributes["type"] == "range":
+        elif attributes["type"] == "range":
 
             if attributes["protocol"] in ["6", "tcp", "Tcp", "TCP"]:
 
@@ -356,6 +356,79 @@ def generate(parsed_data):
                     + "-"
                     + attributes["dst_port_last"]
                 )
+
+        elif attributes["type"] == "v2":
+
+            for ports in attributes["dst_ports"]:
+
+                if "-" in ports:
+
+                    dst_port_range = ports.split("-")
+
+                    for proto in attributes["protocols"]:
+
+                        if proto in ["6", "tcp", "Tcp", "TCP"]:
+
+                            dst_config.append(cfglvl2 + "set protocol TCP/UDP/SCTP")
+                            dst_config.append(
+                                cfglvl2
+                                + "set tcp-portrange "
+                                + dst_port_range[0]
+                                + "-"
+                                + dst_port_range[1]
+                            )
+
+                        elif proto in ["17", "udp", "Udp", "UDP"]:
+
+                            dst_config.append(cfglvl2 + "set protocol TCP/UDP/SCTP")
+                            dst_config.append(
+                                cfglvl2
+                                + "set udp-portrange "
+                                + dst_port_range[0]
+                                + "-"
+                                + dst_port_range[1]
+                            )
+
+                else:
+
+                    for proto in attributes["protocols"]:
+
+                        if proto in ["1", "icmp", "Icmp", "ICMP"]:
+
+                            dst_config.append(cfglvl2 + "set protocol ICMP")
+
+                            if attributes["icmp_type"]:
+                                dst_config.append(
+                                    cfglvl2 + "set icmptype " + attributes["icmp_type"]
+                                )
+
+                            if attributes["icmp_code"]:
+                                dst_config.append(
+                                    cfglvl2 + "set icmpcode " + attributes["icmp_code"]
+                                )
+
+                        elif proto in ["6", "tcp", "Tcp", "TCP"]:
+
+                            dst_config.append(cfglvl2 + "set protocol TCP/UDP/SCTP")
+
+                            if ports:
+                                dst_config.append(
+                                    cfglvl2 + "set tcp-portrange " + ports
+                                )
+
+                        elif proto in ["17", "udp", "Udp", "UDP"]:
+
+                            dst_config.append(cfglvl2 + "set protocol TCP/UDP/SCTP")
+
+                            if ports:
+                                dst_config.append(
+                                    cfglvl2 + "set udp-portrange " + ports
+                                )
+
+                        else:
+
+                            dst_config.append(cfglvl2 + "set protocol IP")
+                            dst_config.append(cfglvl2 + "set protocol-number " + proto)
 
         dst_config.append(cfglvl1 + "next")
 

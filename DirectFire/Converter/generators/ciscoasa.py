@@ -203,6 +203,52 @@ def generate(parsed_data):
                     + attributes["dst_port_last"]
                 )
 
+        elif attributes["type"] == "v2":
+
+            dst_config.append("object-group service " + service)
+
+            for ports in attributes["dst_ports"]:
+
+                if "-" in ports:
+
+                    dst_port_range = ports.split("-")
+
+                    for proto in attributes["protocols"]:
+
+                        if proto == "6":
+
+                            dst_config.append(
+                                " service-object tcp destination range "
+                                + dst_port_range[0]
+                                + " "
+                                + dst_port_range[1]
+                            )
+
+                        elif proto == "17":
+
+                            dst_config.append(
+                                " service-object udp destination range "
+                                + dst_port_range[0]
+                                + " "
+                                + dst_port_range[1]
+                            )
+
+                else:
+
+                    for proto in attributes["protocols"]:
+
+                        if proto == "6":
+
+                            dst_config.append(
+                                " service-object tcp destination eq " + ports
+                            )
+
+                        elif proto == "17":
+
+                            dst_config.append(
+                                " service-object udp destination eq " + ports
+                            )
+
     # Generate service groups
 
     logger.info(__name__ + ": generate service groups")

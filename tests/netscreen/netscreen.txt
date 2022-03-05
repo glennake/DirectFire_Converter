@@ -157,8 +157,12 @@ set interface ethernet0/0 ip 1.2.3.4/29
 set interface ethernet0/0 route
 set interface ethernet0/1 ip 192.168.100.1/24
 set interface ethernet0/1 route
+set interface ethernet1/1.5 description TEST-INTERFACE
 set interface ethernet1/1.5 ip 10.10.10.1/24
 set interface ethernet1/1.5 route
+set interface "ethernet1/1.5" ipv6 mode "host"
+set interface "ethernet1/1.5" ipv6 ip 2006:cd::1/64
+set interface "ethernet1/1.5" ipv6 enable
 set interface ethernet0/6 ip 172.16.0.1/16
 set interface ethernet0/6 nat
 set interface bgroup0 ip 192.168.1.1/24

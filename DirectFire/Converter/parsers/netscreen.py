@@ -2,6 +2,7 @@
 
 # Import modules
 
+import csv
 import logging
 import re
 import sys
@@ -14,9 +15,8 @@ import DirectFire.Converter.settings as settings
 
 # Initialise common functions
 
-"""
-Initialise common functions here
-"""
+common.common_regex()
+ipv4_prefix_to_mask = common.ipv4_prefix_to_mask
 
 # Initiate logging
 
@@ -67,108 +67,43 @@ def parse(src_config, routing_info=""):
 
     # Predefined service objects
 
-    predefined_services = {}
-
-    def _add_predefined_service(
+    def _add_service_object(
         description, dst_ports, name, protocols, src_ports, timeout, type,
     ):
-        predefined_services[name] = {}
-        predefined_services[name]["description"] = description
-        predefined_services[name]["dst_ports"] = dst_ports
-        predefined_services[name]["protocols"] = protocols
-        predefined_services[name]["src_ports"] = src_ports
-        predefined_services[name]["timeout"] = timeout
-        predefined_services[name]["type"] = type
+        data["service_objects"][name] = {}
+        data["service_objects"][name]["description"] = description
+        data["service_objects"][name]["dst_ports"] = dst_ports
+        data["service_objects"][name]["protocols"] = protocols
+        data["service_objects"][name]["src_ports"] = src_ports
+        data["service_objects"][name]["timeout"] = timeout
+        data["service_objects"][name]["type"] = type
 
-    _add_predefined_service(
-        description="",
-        dst_ports=[],
-        name="ANY",
-        protocols=["0"],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-        src_ports=[],
-        timeout="",  # seconds
-        type="v2",
+    filepath_predefined_services = (
+        f"{settings.BASE_DIR}/resources/netscreen/predefined_services.csv"
     )
 
-    _add_predefined_service(
-        description="",
-        dst_ports=["5190-5194"],
-        name="AOL",
-        protocols=["6"],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-        src_ports=[""],
-        timeout="1800",  # seconds
-        type="v2",
-    )
+    with open(filepath_predefined_services, newline="") as csv_file:
+        csv_reader = csv.reader(csv_file)
+        next(csv_reader)
+        for row in csv_reader:
 
-    _add_predefined_service(
-        description="",
-        dst_ports=["5678"],
-        name="APPLE-ICHAT-SNATMAP",
-        protocols=["17"],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-        src_ports=[""],
-        timeout="60",  # seconds
-        type="v2",
-    )
+            if row[1] != "RPC":
 
-    _add_predefined_service(
-        description="",
-        dst_ports=["179"],
-        name="BGP",
-        protocols=["6"],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-        src_ports=[""],
-        timeout="1800",  # seconds
-        type="v2",
-    )
+                name = row[0]
+                dst_ports = row[2]
+                dst_ports = dst_ports.replace("/", "-")
+                protocols = row[1]
+                timeout = "" if row[4] == "default" else int(row[4]) * 60
 
-    _add_predefined_service(
-        description="",
-        dst_ports=["19"],
-        name="CHARGEN",
-        protocols=["6", "17"],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-        src_ports=[""],
-        timeout="60",  # seconds
-        type="v2",
-    )
-
-    _add_predefined_service(
-        description="",
-        dst_ports=["67", "68"],
-        name="DHCP-Relay",
-        protocols=["17"],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-        src_ports=[""],
-        timeout="60",  # seconds
-        type="v2",
-    )
-
-    _add_predefined_service(
-        description="",
-        dst_ports=["9"],
-        name="DISCARD",
-        protocols=["6", "17"],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-        src_ports=[""],
-        timeout="60",  # seconds
-        type="v2",
-    )
-
-    _add_predefined_service(
-        description="",
-        dst_ports=["53"],
-        name="DNS",
-        protocols=["6", "17"],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-        src_ports=[""],
-        timeout="60",  # seconds
-        type="v2",
-    )
-
-    # _add_predefined_service(
-    #     description="DESCRIPTION",
-    #     dst_ports=[""],
-    #     name="NAME",
-    #     protocols=["6", "17"], # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
-    #     src_ports=[""],
-    #     timeout="", # seconds
-    #     type="v2",
-    # )
+                _add_service_object(
+                    description="",
+                    dst_ports=[dst_ports],
+                    name=name,
+                    protocols=[protocols],  # ANY: 0, ICMP: 1, TCP: 6, UDP: 17
+                    src_ports=[],
+                    timeout=timeout,  # seconds
+                    type="v2",
+                )
 
     # Parse system
 
@@ -198,27 +133,89 @@ def parse(src_config, routing_info=""):
         "^set interface (.*?) (.*?)$", src_config, re.MULTILINE
     ):
 
-        interface_name = re_interface.group(1).replace('"', "")
+        interface = re_interface.group(1).replace('"', "")
 
-        if interface_name not in interfaces_config:
-            interfaces_config[interface_name] = []
+        if interface not in interfaces_config:
+            interfaces_config[interface] = []
 
-        interfaces_config[interface_name].append(re_interface.group(2))
+        interfaces_config[interface].append(re_interface.group(2))
 
-        if interface_name not in data["interfaces"]:
-            data["interfaces"][interface_name] = {}
-            data["interfaces"][interface_name]["enabled"] = True
-            data["interfaces"][interface_name]["description"] = ""
-            data["interfaces"][interface_name]["ipv4_config"] = []
-            data["interfaces"][interface_name]["ipv6_config"] = []
-            data["interfaces"][interface_name]["physical_interfaces"] = []
-            data["interfaces"][interface_name]["type"] = "interface"
-            data["interfaces"][interface_name]["vlan_id"] = ""
-            data["interfaces"][interface_name]["vlan_name"] = ""
+        if interface not in data["interfaces"]:
+            data["interfaces"][interface] = {}
+            data["interfaces"][interface]["enabled"] = True
+            data["interfaces"][interface]["description"] = ""
+            data["interfaces"][interface]["ipv4_config"] = []
+            data["interfaces"][interface]["ipv6_config"] = []
+            data["interfaces"][interface]["physical_interfaces"] = []
+            data["interfaces"][interface]["type"] = "interface"
+            data["interfaces"][interface]["vlan_id"] = ""
+            data["interfaces"][interface]["vlan_name"] = ""
 
     for interface in data["interfaces"]:
         if "disable" in interfaces_config[interface]:
             data["interfaces"][interface]["enabled"] = False
+
+        if "." in interface:
+            phys_interface = interface.split(".")
+            data["interfaces"][interface]["physical_interfaces"].append(
+                phys_interface[0]
+            )
+            data["interfaces"][interface]["type"] = "subinterface"
+
+        if "vlan" in interface:
+            data["interfaces"][interface]["type"] = "vlan"
+
+    ## find interface description
+
+    for re_description in re.finditer(
+        "^set interface (.*?) description (.*?)$", src_config, re.MULTILINE,
+    ):
+        interface = re_description.group(1).replace('"', "")
+        data["interfaces"][interface]["description"] = re_description.group(2)
+
+    ## find interface ipv4 configurations
+
+    for re_ipv4 in re.finditer(
+        "^set interface (.*?) ip ("
+        + common.common_regex.ipv4_address
+        + ")("
+        + common.common_regex.ipv4_prefix
+        + ")$",
+        src_config,
+        re.MULTILINE,
+    ):
+        interface = re_ipv4.group(1).replace('"', "")
+        ipv4 = {}
+        ipv4["ip_address"] = re_ipv4.group(2)
+        ipv4["mask"] = ipv4_prefix_to_mask(re_ipv4.group(3))
+        data["interfaces"][interface]["ipv4_config"].append(ipv4)
+
+    ## find interface ipv6 configurations
+
+    for re_ipv6 in re.finditer(
+        "^set interface (.*?) ipv6 ip ("
+        + common.common_regex.ipv6_address
+        + ")("
+        + common.common_regex.ipv6_mask
+        + ")$",
+        src_config,
+        re.MULTILINE,
+    ):
+        interface = re_ipv6.group(1).replace('"', "")
+        ipv6 = {}
+        ipv6["ip_address"] = re_ipv6.group(2)
+        ipv6["mask"] = re_ipv6.group(3)
+        data["interfaces"][interface]["ipv6_config"].append(ipv6)
+
+    ## find interface vlan tag configurations
+
+    for re_vlan_id in re.finditer(
+        "^set interface (.*?) tag (" + common.common_regex.vlan_id + ")",
+        src_config,
+        re.MULTILINE,
+    ):
+        interface = re_vlan_id.group(1).replace('"', "")
+        data["interfaces"][interface]["vlan_id"] = re_vlan_id.group(2)
 
     # Parse zones
 
@@ -244,14 +241,18 @@ def parse(src_config, routing_info=""):
             data["zones"][zone_name]["enabled"] = True
             data["zones"][zone_name]["members"] = []
 
+    ## check if intrazone traffic is blocked
+
     for zone in data["zones"]:
         if "block" in zones_config[zone]:
             data["zones"][zone_name]["allow_intrazone"] = False
 
+    ## find zone interface members
+
     for interface in data["interfaces"]:
-        for str in interfaces_config[interface]:
-            if "zone " in str:
-                re_zone = re.search('zone "(.*?)"', str)
+        for string in interfaces_config[interface]:
+            if "zone " in string:
+                re_zone = re.search('zone "(.*?)"', string)
                 zone_name = re_zone.group(1)
                 data["zones"][zone_name]["members"].append(interface)
 

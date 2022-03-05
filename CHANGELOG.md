@@ -224,3 +224,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Initial support for parsing Netscreen
+
+
+## [0.8.1] - 2022-03-05
+
+### Added
+
+- Support for interfaces and zones in Netscreen parser module
+- Support for service_objects type v2 in current generator modules
+
+### Changed
+
+- Improved import of predefined services for Netscreen parser module

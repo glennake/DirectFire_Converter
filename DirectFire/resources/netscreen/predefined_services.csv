@@ -1,0 +1,142 @@
+Name,Proto,Port,Group,Timeout,Flag
+ANY,0,0/65535,other,default,Pre-defined
+AOL,6,5190/5194,remote,30,Pre-defined
+APPLE-ICHAT-SNATMAP,17,5678,other,1,Pre-defined
+BGP,6,179,other,30,Pre-defined
+CHARGEN,17,19,other,1,Pre-defined
+DHCP-Relay,17,67,info seeking,1,Pre-defined
+DISCARD,17,9,other,1,Pre-defined
+DNS,17,53,info seeking,1,Pre-defined
+ECHO,17,7,other,1,Pre-defined
+FINGER,6,79,info seeking,30,Pre-defined
+FTP,6,21,remote,30,Pre-defined
+FTP-Get,6,21,remote,30,Pre-defined
+FTP-Put,6,21,remote,30,Pre-defined
+GNUTELLA,17,6346/6347,remote,1,Pre-defined
+GOPHER,6,70,info seeking,30,Pre-defined
+GRE,47,0/65535,remote,60,Pre-defined
+GTP,6,3386,remote,30,Pre-defined
+H.323,6,1720,remote,30,Pre-defined
+HTTP,6,80,info seeking,5,Pre-defined
+HTTP-EXT,6,8000/8001,info seeking,5,Pre-defined
+HTTPS,6,443,security,30,Pre-defined
+ICMP Address Mask,1,0/65535,other,1,Pre-defined
+ICMP Dest Unreachable,1,0/65535,other,1,Pre-defined
+ICMP Fragment Needed,1,0/65535,other,1,Pre-defined
+ICMP Fragment Reassembly,1,0/65535,other,1,Pre-defined
+ICMP Host Unreachable,1,0/65535,other,1,Pre-defined
+ICMP Parameter Problem,1,0/65535,other,1,Pre-defined
+ICMP Port Unreachable,1,0/65535,other,1,Pre-defined
+ICMP Protocol Unreach,1,0/65535,other,1,Pre-defined
+ICMP Redirect,1,0/65535,other,1,Pre-defined
+ICMP Redirect Host,1,0/65535,other,1,Pre-defined
+ICMP Redirect TOS & Host,1,0/65535,other,1,Pre-defined
+ICMP Redirect TOS & Net,1,0/65535,other,1,Pre-defined
+ICMP Source Quench,1,0/65535,other,1,Pre-defined
+ICMP Source Route Fail,1,0/65535,other,1,Pre-defined
+ICMP Time Exceeded,1,0/65535,other,1,Pre-defined
+ICMP-ANY,1,0/65535,other,1,Pre-defined
+ICMP-INFO,1,0/65535,other,1,Pre-defined
+ICMP-TIMESTAMP,1,0/65535,other,1,Pre-defined
+IDENT,6,113,other,30,Pre-defined
+IKE,17,500,security,1,Pre-defined
+IKE-NAT,17,500,security,3,Pre-defined
+IMAP,6,143,email,30,Pre-defined
+Internet Locator Service,6,389,info seeking,30,Pre-defined
+IRC,6,6660/6669,remote,30,Pre-defined
+L2TP,17,1701,remote,1,Pre-defined
+LDAP,6,389,info seeking,30,Pre-defined
+LPR,6,515,other,30,Pre-defined
+MAIL,6,25,email,30,Pre-defined
+MGCP-CA,17,2727,other,120,Pre-defined
+MGCP-UA,17,2427,other,120,Pre-defined
+MS-AD-BR,RPC,-,other,1,Pre-defined
+MS-AD-DRSUAPI,RPC,-,other,1,Pre-defined
+MS-AD-DSROLE,RPC,-,other,1,Pre-defined
+MS-AD-DSSETUP,RPC,-,other,1,Pre-defined
+MS-DTC,RPC,-,other,1,Pre-defined
+MS-EXCHANGE-DATABASE,RPC,-,other,30,Pre-defined
+MS-EXCHANGE-DIRECTORY,RPC,-,other,30,Pre-defined
+MS-EXCHANGE-INFO-STORE,RPC,-,other,30,Pre-defined
+MS-EXCHANGE-MTA,RPC,-,other,30,Pre-defined
+MS-EXCHANGE-STORE,RPC,-,other,30,Pre-defined
+MS-EXCHANGE-SYSATD,RPC,-,other,30,Pre-defined
+MS-FRS,RPC,-,other,1,Pre-defined
+MS-IIS-COM,RPC,-,other,30,Pre-defined
+MS-IIS-IMAP4,RPC,-,other,1,Pre-defined
+MS-IIS-INETINFO,RPC,-,other,1,Pre-defined
+MS-IIS-NNTP,RPC,-,other,1,Pre-defined
+MS-IIS-POP3,RPC,-,other,1,Pre-defined
+MS-IIS-SMTP,RPC,-,other,1,Pre-defined
+MS-ISMSERV,RPC,-,other,1,Pre-defined
+MS-MESSENGER,RPC,-,other,30,Pre-defined
+MS-MQQM,RPC,-,other,1,Pre-defined
+MS-NETLOGON,RPC,-,other,1,Pre-defined
+MS-RPC-ANY,RPC,-,other,1,Pre-defined
+MS-RPC-EPM,17,135,remote,30,Pre-defined
+MS-SCHEDULER,RPC,-,other,1,Pre-defined
+MS-SQL,6,1433,other,30,Pre-defined
+MS-WIN-DNS,RPC,-,other,1,Pre-defined
+MS-WINS,RPC,-,other,1,Pre-defined
+MS-WMIC,RPC,-,other,30,Pre-defined
+MSN,6,1863,remote,30,Pre-defined
+NBDS,17,138,remote,1,Pre-defined
+NBNAME,17,137,remote,1,Pre-defined
+NetMeeting,6,1720,remote,30,Pre-defined
+NFS,17,111,remote,40,Pre-defined
+NNTP,6,119,info seeking,30,Pre-defined
+NS Global,6,15397,remote,30,Pre-defined
+NS Global PRO,6,15397,remote,30,Pre-defined
+NSM,17,69,other,1,Pre-defined
+NTP,17,123,other,1,Pre-defined
+OSPF,89,0/65535,other,1,Pre-defined
+PC-Anywhere,17,5632,remote,1,Pre-defined
+PING,1,0/65535,other,1,Pre-defined
+POP3,6,110,email,30,Pre-defined
+PPTP,6,1723,security,30,Pre-defined
+RADIUS,17,1812/1813,other,1,Pre-defined
+Real Media,6,7070,info seeking,30,Pre-defined
+REXEC,6,512,remote,30,Pre-defined
+RIP,17,520,other,1,Pre-defined
+RLOGIN,6,513,remote,30,Pre-defined
+RSH,6,514,remote,30,Pre-defined
+RTSP,6,554,info seeking,30,Pre-defined
+SCCP,6,2000,other,30,Pre-defined
+SCTP-ANY,132,0/65535,other,1,Pre-defined
+SIP,17,5060,other,1,Pre-defined
+SMB,6,139,remote,30,Pre-defined
+SMTP,6,25,email,30,Pre-defined
+SNMP,17,161,other,1,Pre-defined
+SQL Monitor,17,1434,other,1,Pre-defined
+SQL*Net V1,6,1525,other,30,Pre-defined
+SQL*Net V2,6,1521,other,30,Pre-defined
+SSH,6,22,security,15,Pre-defined
+SUN-RPC,RPC,-,other,1,Pre-defined
+SUN-RPC-ANY,RPC,-,other,1,Pre-defined
+SUN-RPC-MOUNTD,RPC,-,other,30,Pre-defined
+SUN-RPC-NFS,RPC,-,other,40,Pre-defined
+SUN-RPC-NLOCKMGR,RPC,-,other,1,Pre-defined
+SUN-RPC-PORTMAPPER,17,111,remote,40,Pre-defined
+SUN-RPC-RQUOTAD,RPC,-,other,30,Pre-defined
+SUN-RPC-RSTATD,RPC,-,other,30,Pre-defined
+SUN-RPC-RUSERD,RPC,-,other,30,Pre-defined
+SUN-RPC-SADMIND,RPC,-,other,30,Pre-defined
+SUN-RPC-SPRAYD,RPC,-,other,30,Pre-defined
+SUN-RPC-STATUS,RPC,-,other,30,Pre-defined
+SUN-RPC-WALLD,RPC,-,other,30,Pre-defined
+SUN-RPC-YPBIND,RPC,-,other,30,Pre-defined
+SYSLOG,17,514,other,1,Pre-defined
+TALK,17,517/518,other,1,Pre-defined
+TCP-ANY,6,0/65535,other,30,Pre-defined
+TELNET,6,23,remote,30,Pre-defined
+TFTP,17,69,remote,1,Pre-defined
+TRACEROUTE,1,0/65535,other,1,Pre-defined
+UDP-ANY,17,0/65535,other,1,Pre-defined
+UUCP,17,540,remote,1,Pre-defined
+VDO Live,6,7000/7010,info seeking,30,Pre-defined
+VNC,6,5800,other,30,Pre-defined
+WAIS,6,210,info seeking,30,Pre-defined
+WHOIS,6,43,info seeking,30,Pre-defined
+WINFRAME,6,1494,remote,30,Pre-defined
+X-WINDOWS,6,6000/6063,remote,30,Pre-defined
+YMSG,6,5050,remote,30,Pre-defined
