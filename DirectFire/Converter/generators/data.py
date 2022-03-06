@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Generator
 
+
 def generate(parsed_data):
 
     logger.info(__name__ + ": generator module started")

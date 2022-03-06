@@ -15,6 +15,16 @@ set service "RDP_58009Port" protocol tcp src-port 0-65535 dst-port 58009-58009
 set service "RDP_58009Port" + tcp src-port 0-65535 dst-port 3389-3389
 set service "SpiceWorks" protocol tcp src-port 0-65535 dst-port 9676-9676
 set service "SpiceworksMaintenance" protocol tcp src-port 0-65535 dst-port 9677-9677
+set service "test-1" protocol tcp dst-port 1035-1035 timeout 20
+set service "test-1" + udp src-port 0-65535 dst-port 1111-1111
+set service "ftp-1" protocol tcp src-port 0-65535 dst-port 2121-2121 timeout 10
+set service "telnet-1" protocol tcp src-port 0-65535 dst-port 2100-2148 timeout 20
+set service "host-unreachable" protocol icmp type 5 code 0
+set service "host-unreachable" timeout 2
+set group service "mytestgroup1"
+set group service "mytestgroup1" add "iLo"
+set group service "mytestgroup1" add "RDP_58009Port"
+set group service "mytestgroup1" add "SpiceWorks"
 set alg appleichat enable
 unset alg appleichat re-assembly enable
 set alg sctp enable

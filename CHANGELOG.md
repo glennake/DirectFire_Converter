@@ -242,3 +242,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Support for network and network groups in Netscreen parser module
+
+## [0.8.3] - 2022-03-06
+
+### Added
+
+- Support for blackhole static routes in Netscreen parser module
+- Support for services and service groups in Netscreen parser module
+
+### Changed
+
+- Improved predefined service processing in Netscreen parser module

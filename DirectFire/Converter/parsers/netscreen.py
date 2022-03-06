@@ -65,6 +65,14 @@ def parse(src_config, routing_info=""):
     Parser specific variables
     """
 
+    # Predefined network objects
+
+    data["service_objects"]["ANY"] = {"type": "any"}
+    data["service_objects"]["ANY-IPv4"] = {"type": "any"}
+    data["service_objects"]["Any-IPv4"] = {"type": "any"}
+    data["service_objects"]["ANY-IPv6"] = {"type": "any"}
+    data["service_objects"]["Any-IPv6"] = {"type": "any"}
+
     # Predefined service objects
 
     filepath_predefined_services = (
@@ -81,17 +89,39 @@ def parse(src_config, routing_info=""):
                 name = row[0]
                 dst_ports = row[2]
                 dst_ports = dst_ports.replace("/", "-")
-                protocols = row[1]
+                protocol = row[1]
                 timeout = "" if row[4] == "default" else int(row[4]) * 60
 
-                data["service_objects"][name] = {
-                    "description": "",
-                    "dst_ports": [dst_ports],
-                    "protocols": [protocols],
-                    "src_ports": [],
-                    "timeout": timeout,
-                    "type": "v2",
-                }
+                if protocol in ["6", "17"]:
+                    if name not in data["service_objects"]:
+                        data["service_objects"][name] = {
+                            "description": "",
+                            "dst_ports": [dst_ports],
+                            "protocols": [protocol],
+                            "src_ports": [],
+                            "timeout": timeout,
+                            "type": "v2",
+                        }
+                    else:
+                        data["service_objects"][name]["dst_ports"].append(dst_ports)
+
+                elif protocol == "1":
+                    data["service_objects"][name] = {
+                        "description": "",
+                        "icmp_code": row[6],  ### should this be a list of codes
+                        "icmp_type": row[7],  ### should this be a list of types
+                        "protocols": [protocol],
+                        "timeout": timeout,
+                        "type": "v2",
+                    }
+
+                else:
+                    data["service_objects"][name] = {
+                        "description": "",
+                        "protocols": [protocol],
+                        "timeout": timeout,
+                        "type": "v2",
+                    }
 
     # Parse system
 
@@ -263,7 +293,7 @@ def parse(src_config, routing_info=""):
         route_prefix = re_static_route.group(2)
 
         route = {
-            "blackhole": False,  ### need to add a check for this
+            "blackhole": False,
             "description": "",
             "distance": re_static_route.group(5) or "20",
             "enabled": True,
@@ -273,6 +303,9 @@ def parse(src_config, routing_info=""):
             "network": re_static_route.group(1),
             "type": "static",
         }
+
+        if route["interface"] == "null":
+            route["blackhole"] = True
 
         data["routes"].append(route)
 
@@ -335,7 +368,7 @@ def parse(src_config, routing_info=""):
 
     # Parse IPv6 network objects
 
-    logger.info(__name__ + ": parse IPv6 network objects")
+    logger.info(__name__ + ": parse IPv6 network objects - not yet supported")
 
     """
     Parse IPv6 network objects
@@ -361,7 +394,7 @@ def parse(src_config, routing_info=""):
 
     # Parse IPv6 network groups
 
-    logger.info(__name__ + ": parse IPv6 network groups")
+    logger.info(__name__ + ": parse IPv6 network groups - not yet supported")
 
     """
     Parse IPv6 network groups
@@ -371,21 +404,136 @@ def parse(src_config, routing_info=""):
 
     logger.info(__name__ + ": parse service objects")
 
-    """
-    Parse service objects
-    """
+    ## find first entry for tcp/udp service objects
+
+    for re_service in re.finditer(
+        "^set service (.*?) protocol (.*?)(?: src-port (.*?))? dst-port (.*?)(?: timeout ([0-9]{1,}))?$",
+        src_config,
+        re.MULTILINE,
+    ):
+
+        obj_name = re_service.group(1).replace('"', "")
+        protocol = re_service.group(2)
+        src_ports = re_service.group(3)
+        dst_ports = re_service.group(4)
+        dst_ports_split = dst_ports.split("-")
+        timeout = str(re_service.group(5))
+
+        svc_obj = {
+            "description": "",
+            "dst_ports": [],
+            "protocols": [],
+            "src_ports": [],
+            "timeout": timeout or "",
+            "type": "v2",
+        }
+
+        if dst_ports_split[0] == dst_ports_split[1]:
+            svc_obj["dst_ports"].append(dst_ports_split[0])
+        else:
+            svc_obj["dst_ports"].append(dst_ports)
+
+        if protocol == "tcp":
+            svc_obj["protocols"].append("6")
+            if not timeout:
+                svc_obj["timeout"] = "1800"
+        elif protocol == "udp":
+            svc_obj["protocols"].append("17")
+            if not timeout:
+                svc_obj["timeout"] = "60"
+
+        if src_ports:
+            src_ports_split = src_ports.split("-")
+            if src_ports_split[0] != "0" or src_ports_split[1] != "65535":
+                if src_ports_split[0] == src_ports_split[1]:
+                    svc_obj["src_ports"].append(src_ports_split[0])
+                else:
+                    svc_obj["src_ports"].append(src_ports)
+
+        data["service_objects"][obj_name] = svc_obj
+
+    ## find additional entries for tcp/udp service objects
+
+    for re_service in re.finditer(
+        "^set service (.*?) \+ (.*?)(?: src-port (.*?))? dst-port (.*?)$",
+        src_config,
+        re.MULTILINE,
+    ):
+
+        obj_name = re_service.group(1).replace('"', "")
+        protocol = re_service.group(2)
+        src_ports = re_service.group(3)
+        src_ports_split = src_ports.split("-")
+        dst_ports = re_service.group(4)
+        dst_ports_split = dst_ports.split("-")
+
+        if dst_ports_split[0] == dst_ports_split[1]:
+            data["service_objects"][obj_name]["dst_ports"].append(dst_ports_split[0])
+        else:
+            data["service_objects"][obj_name]["dst_ports"].append(dst_ports)
+
+        if (
+            protocol == "tcp"
+            and "6" not in data["service_objects"][obj_name]["protocols"]
+        ):  ### how do these link to the port entry, will apply to all dst_ports
+            data["service_objects"][obj_name]["protocols"].append("6")
+        elif (
+            protocol == "udp"
+            and "17" not in data["service_objects"][obj_name]["protocols"]
+        ):  ### how do these link to the port entry, will apply to all dst_ports
+            data["service_objects"][obj_name]["protocols"].append("17")
+
+        if src_ports_split[0] != "0" or src_ports_split[1] != "65535":
+            if src_ports_split[0] == src_ports_split[1]:
+                data["service_objects"][obj_name]["src_ports"].append(
+                    src_ports_split[0]
+                )
+            else:
+                data["service_objects"][obj_name]["src_ports"].append(src_ports)
+
+    ## find icmp service objects
+
+    for re_service in re.finditer(
+        "^set service (.*?) protocol icmp type ([0-9]{1,}) code ([0-9]{1,})$",
+        src_config,
+        re.MULTILINE,
+    ):
+
+        obj_name = re_service.group(1).replace('"', "")
+        icmp_type = str(re_service.group(2))
+        icmp_code = str(re_service.group(3))
+
+        svc_obj = {
+            "description": "",
+            "icmp_code": icmp_code,
+            "icmp_type": icmp_type,
+            "protocols": ["1"],
+            "timeout": "60",
+            "type": "v2",
+        }
+
+        data["service_objects"][obj_name] = svc_obj
 
     # Parse service groups
 
     logger.info(__name__ + ": parse service groups")
 
-    """
-    Parse service groups
-    """
+    for re_group in re.finditer(
+        "^set group service (.*?) add (.*?)$", src_config, re.MULTILINE,
+    ):
+
+        obj_name = re_group.group(1).replace('"', "")
+        member = re_group.group(2).replace('"', "")
+
+        if obj_name not in data["service_groups"]:
+            grp_obj = {"description": "", "members": [], "type": "group"}
+            data["service_groups"][obj_name] = grp_obj
+
+        data["service_groups"][obj_name]["members"].append(member)
 
     # Parse firewall policies
 
-    logger.info(__name__ + ": parse firewall policies")
+    logger.info(__name__ + ": parse firewall policies - not yet supported")
 
     """
     Parse firewall policies
@@ -393,7 +541,7 @@ def parse(src_config, routing_info=""):
 
     # Parse NAT
 
-    logger.info(__name__ + ": parse NAT")
+    logger.info(__name__ + ": parse NAT - not yet supported")
 
     """
     Parse NAT policies
